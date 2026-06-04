@@ -213,48 +213,263 @@ export function buildNewsletterPrompt(formData) {
   }[pijler] || '#2FA766'
 
   const linkInstructie = zoekWebsiteLink
-    ? `- Zoek op vdt-advocaten.nl via Google Search naar de meest relevante pagina voor dit onderwerp: ofwel een teamlid ofwel een expertise-/dienstenpagina. Verwerk de gevonden URL als klikbare hyperlink in de HTML — op één logische plek, geïntegreerd in de tekst of als secundaire CTA-link.`
+    ? `Verwerk een passende URL van vdt-advocaten.nl via Google Search op één natuurlijke plek.`
     : websiteLink
-    ? `- Verwerk deze URL als klikbare hyperlink in de HTML op een natuurlijke plek: ${websiteLink}`
+    ? `Verwerk deze URL op één natuurlijke plek: ${websiteLink}`
     : ''
+
+  const today = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return `${BRAND_SYSTEM_PROMPT}
 
 ---
 
-Schrijf een volledige e-mailnieuwsbrief voor VDT Advocaten.
-
-BEPAAL EERST (intern, niet tonen):
-- Doelgroep: ${doelgroep}
-- Contentpijler: ${pijler}
-- Type: ${typeNieuwsbrief}
-- Doel: relaties warm houden, niet verkopen, gesprekken uitlokken
-
-DAN SCHRIJF:
-Onderwerp / thema: ${onderwerp}
+Schrijf de tekst voor een VDT Advocaten e-mailnieuwsbrief over: "${onderwerp}"
 ${extraContext ? `Extra context: ${extraContext}` : ''}
-
-STRUCTUUR VAN DE MAILING:
-- Opening: kort, persoonlijk, geen formele introductie
-- Hoofdonderwerp: 1 onderwerp, max 200 woorden
-- Concrete waarde: 3 inzichten / tips / aandachtspunten
-- Afsluiting: laagdrempelige CTA (Herkenbaar? Sparren? Laat gerust iets weten.)
+Doelgroep: ${doelgroep} | Type: ${typeNieuwsbrief} | Pijler: ${pijler}
 ${linkInstructie}
 
-HTML E-MAIL TECHNISCH:
-- Clean HTML met uitsluitend inline styles (geen <style> blokken)
-- Maximale breedte 600px, gecentreerd
-- Header: achtergrond #2FA766, witte tekst "VDT Advocaten", payoff "Onderneemt met je mee."
-- Accentkleur voor pijler ${pijler}: ${pijlerKleur}
-- Font: Arial, 16px, #333333
-- CTA-knop: groen (#2FA766), witte tekst
-- Footer: Hart van Brabantlaan 500, 5038 JA Tilburg · 013-544-0400 · lovetilburg@vdt-advocaten.nl
+LEVER DE VOLGENDE TEKSTVELDEN AAN — gescheiden door de exacte labels hieronder.
+Schrijf in VDT-tone: direct, Brabants nuchter, warme taal, geen jargon, geen AI-clichés.
 
-Geef je antwoord in dit exacte formaat:
-ONDERWERPREGEL: [pakkende onderwerpregel]
-PREHEADER: [max 90 tekens]
-HTML:
-[volledige HTML]`
+ONDERWERPREGEL: [max 60 tekens, pakkend]
+PREHEADER: [max 90 tekens, verlengstuk van onderwerpregel]
+EDITIE_LABEL: [kort label in hoofdletters, bijv. "ARBEIDSRECHT" of "ZOMER 2026"]
+HERO_TITEL: [grote pakkende kop, max 2 regels]
+LEAD_VRAAG: [1 zin die de kernvraag stelt — waarom leest de lezer dit?]
+LEAD_TEKST: [2-3 zinnen inleiding, persoonlijk en direct]
+BULLET_1: [kort — max 12 woorden]
+BULLET_2: [kort — max 12 woorden]
+BULLET_3: [kort — max 12 woorden]
+BULLET_4: [optioneel — laat leeg als 3 genoeg is]
+SECTIE_LABEL: [bijv. "ONZE KIJK" of "WAT WIJ ZIEN"]
+SECTIE_TITEL: [tussenkop voor het hoofdartikel]
+SECTIE_TEKST: [100-150 woorden kerninhoud — de echte waarde van deze mailing]
+PUNT_01_TITEL: [pakkende kop voor inzicht/tip 1]
+PUNT_01_TEKST: [2-3 zinnen, concreet en bruikbaar]
+PUNT_02_TITEL: [pakkende kop voor inzicht/tip 2]
+PUNT_02_TEKST: [2-3 zinnen, concreet en bruikbaar]
+PUNT_03_TITEL: [pakkende kop voor inzicht/tip 3]
+PUNT_03_TEKST: [2-3 zinnen, concreet en bruikbaar]
+KAART_1_LABEL: [kort thema-label in hoofdletters]
+KAART_1_TITEL: [koptitel verdiepingsartikel 1]
+KAART_1_TEKST: [1 zin over dit artikel]
+KAART_2_LABEL: [kort thema-label in hoofdletters]
+KAART_2_TITEL: [koptitel verdiepingsartikel 2]
+KAART_2_TEKST: [1 zin over dit artikel]
+SLOTCITAAT: [1-2 zinnen slotbelofte of kernboodschap — niet generiek]
+KOFFIE_VRAAG: [1 zin uitnodiging specifiek voor dit onderwerp — bijv. "Benieuwd wat dit voor jouw personeel betekent?"]`
+}
+
+function buildNewsletterHtml(fields, pijlerKleur, today) {
+  const ac = pijlerKleur
+  const acLight = ac + '18'
+  const get = (key) => fields[key] || ''
+
+  return `<!DOCTYPE html>
+<html lang="nl">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${get('ONDERWERPREGEL')}</title></head>
+<body style="margin:0;padding:0;background:#f0f0f0;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0f0;">
+<tr><td align="center" style="padding:24px 16px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;">
+
+  <!-- HEADER -->
+  <tr><td style="background:${ac};padding:24px 32px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td><span style="color:#ffffff;font-size:22px;font-weight:900;letter-spacing:-0.5px;">VDT.</span> <span style="color:rgba(255,255,255,0.75);font-size:13px;font-weight:400;letter-spacing:1px;">advocaten</span></td>
+        <td align="right">
+          <div style="color:rgba(255,255,255,0.85);font-size:12px;">${today}</div>
+          <div style="color:rgba(255,255,255,0.55);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">ONDERNEEMT MET JE MEE</div>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- HERO -->
+  <tr><td style="background:${ac};padding:8px 32px 36px;">
+    <div style="color:rgba(255,255,255,0.6);font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">${get('EDITIE_LABEL')}</div>
+    <h1 style="color:#ffffff;font-size:30px;line-height:1.2;margin:0;font-weight:900;">${get('HERO_TITEL')}</h1>
+  </td></tr>
+
+  <!-- LEAD + IN HET KORT -->
+  <tr><td style="padding:32px;">
+    <h3 style="color:${ac};font-size:16px;margin:0 0 10px;font-weight:700;">${get('LEAD_VRAAG')}</h3>
+    <p style="color:#333333;font-size:15px;line-height:1.6;margin:0 0 24px;">${get('LEAD_TEKST')}</p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f5;border-radius:8px;border-left:4px solid ${ac};">
+      <tr><td style="padding:20px 24px;">
+        <div style="color:${ac};font-size:10px;letter-spacing:3px;font-weight:700;text-transform:uppercase;margin-bottom:12px;">IN HET KORT</div>
+        <table cellpadding="0" cellspacing="0">
+          ${[get('BULLET_1'), get('BULLET_2'), get('BULLET_3'), get('BULLET_4')].filter(Boolean).map(b =>
+            `<tr><td style="padding:4px 0;vertical-align:top;"><span style="color:${ac};font-weight:700;margin-right:8px;">—</span></td><td style="color:#444;font-size:14px;line-height:1.5;padding:4px 0;">${b}</td></tr>`
+          ).join('')}
+        </table>
+      </td></tr>
+    </table>
+
+    <div style="margin-top:16px;color:#aaaaaa;font-size:12px;">VDT Redactie &nbsp;·&nbsp; Voor ${get('DOELGROEP') || 'onze klanten'}</div>
+  </td></tr>
+
+  <!-- DIVIDER -->
+  <tr><td style="padding:0 32px;"><hr style="border:none;border-top:1px solid #eeeeee;margin:0;"></td></tr>
+
+  <!-- HOOFDSECTIE -->
+  <tr><td style="padding:32px 32px 24px;">
+    <div style="color:${ac};font-size:10px;letter-spacing:3px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">${get('SECTIE_LABEL')}</div>
+    <h2 style="color:#1a1a1a;font-size:22px;margin:0 0 16px;font-weight:800;">${get('SECTIE_TITEL')}</h2>
+    <p style="color:#333333;font-size:15px;line-height:1.7;margin:0 0 20px;">${get('SECTIE_TEKST')}</p>
+    <a href="https://vdt-advocaten.nl" style="color:${ac};font-size:13px;font-weight:700;text-decoration:none;letter-spacing:0.5px;">LEES MEER OP ONZE WEBSITE →</a>
+  </td></tr>
+
+  <!-- DIVIDER -->
+  <tr><td style="padding:0 32px;"><hr style="border:none;border-top:1px solid #eeeeee;margin:0;"></td></tr>
+
+  <!-- WAT DIT VOOR JOU BETEKENT — 3 PUNTEN -->
+  <tr><td style="padding:32px 32px 8px;">
+    <div style="color:${ac};font-size:10px;letter-spacing:3px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">WAT DIT VOOR JOU BETEKENT</div>
+    <h2 style="color:#1a1a1a;font-size:20px;margin:0 0 8px;font-weight:800;">Drie dingen om nu te weten.</h2>
+  </td></tr>
+
+  ${['01','02','03'].map(n => `
+  <tr><td style="padding:16px 32px;border-top:1px solid #f0f0f0;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="36" valign="top" style="padding-top:2px;"><span style="color:${ac};font-size:11px;font-weight:700;letter-spacing:1px;">${n}</span></td>
+        <td>
+          <div style="color:#1a1a1a;font-size:15px;font-weight:700;margin-bottom:6px;">${get('PUNT_'+n+'_TITEL')}</div>
+          <p style="color:#555555;font-size:14px;line-height:1.6;margin:0;">${get('PUNT_'+n+'_TEKST')}</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>`).join('')}
+
+  <!-- DIVIDER -->
+  <tr><td style="padding:24px 32px 0;"><hr style="border:none;border-top:1px solid #eeeeee;margin:0;"></td></tr>
+
+  <!-- VERDER LEZEN — 2 KAARTEN -->
+  <tr><td style="padding:32px;">
+    <div style="color:${ac};font-size:10px;letter-spacing:3px;font-weight:700;text-transform:uppercase;margin-bottom:16px;">VERDER LEZEN</div>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="48%" valign="top" style="background:#f7f7f5;border-radius:8px;padding:20px;border-top:3px solid ${ac};">
+          <div style="color:${ac};font-size:9px;letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">${get('KAART_1_LABEL')}</div>
+          <div style="color:#1a1a1a;font-size:14px;font-weight:700;margin-bottom:8px;line-height:1.4;">${get('KAART_1_TITEL')}</div>
+          <p style="color:#666666;font-size:13px;line-height:1.5;margin:0 0 12px;">${get('KAART_1_TEKST')}</p>
+          <a href="https://vdt-advocaten.nl" style="color:${ac};font-size:12px;font-weight:700;text-decoration:none;letter-spacing:0.5px;">LEES HET ARTIKEL →</a>
+        </td>
+        <td width="4%"></td>
+        <td width="48%" valign="top" style="background:#f7f7f5;border-radius:8px;padding:20px;border-top:3px solid ${ac};">
+          <div style="color:${ac};font-size:9px;letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">${get('KAART_2_LABEL')}</div>
+          <div style="color:#1a1a1a;font-size:14px;font-weight:700;margin-bottom:8px;line-height:1.4;">${get('KAART_2_TITEL')}</div>
+          <p style="color:#666666;font-size:13px;line-height:1.5;margin:0 0 12px;">${get('KAART_2_TEKST')}</p>
+          <a href="https://vdt-advocaten.nl" style="color:${ac};font-size:12px;font-weight:700;text-decoration:none;letter-spacing:0.5px;">LEES HET ARTIKEL →</a>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- SLOTCITAAT -->
+  <tr><td style="padding:28px 32px;background:${acLight};border-left:0;">
+    <p style="color:#1a1a1a;font-size:16px;font-style:italic;line-height:1.6;margin:0 0 16px;">"${get('SLOTCITAAT')}"</p>
+    <p style="color:#666666;font-size:13px;margin:0;">Met vriendelijke groet,<br><strong style="color:#1a1a1a;">De redactie van VDT</strong><br><span style="color:#aaaaaa;">Studio · Tilburg</span></p>
+  </td></tr>
+
+  <!-- BAKJE KOFFIE -->
+  <tr><td style="background:${ac};padding:28px 32px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td valign="middle">
+          <div style="color:#ffffff;font-size:16px;font-weight:800;letter-spacing:0.5px;margin-bottom:6px;">BAKJE KOFFIE?</div>
+          <p style="color:rgba(255,255,255,0.85);font-size:14px;margin:0 0 4px;">${get('KOFFIE_VRAAG')}</p>
+          <p style="color:rgba(255,255,255,0.65);font-size:13px;margin:0;">We schuiven graag aan. Laat het weten en we plannen iets in.</p>
+        </td>
+        <td align="right" valign="middle" style="padding-left:16px;white-space:nowrap;">
+          <a href="mailto:lovetilburg@vdt-advocaten.nl" style="display:inline-block;background:#ffffff;color:${ac};padding:12px 20px;border-radius:6px;font-weight:800;font-size:13px;text-decoration:none;letter-spacing:0.5px;">PLAN EEN GESPREK →</a>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- VDT TAGLINE BALK -->
+  <tr><td style="background:#1a1a1a;padding:24px 32px;text-align:center;">
+    <div style="color:#ffffff;font-size:20px;font-weight:900;letter-spacing:-0.5px;">VDT.</div>
+    <div style="color:rgba(255,255,255,0.4);font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-top:4px;">ONDERNEEMT MET JE MEE</div>
+  </td></tr>
+
+  <!-- DRIE TEAMS NAVIGATIE -->
+  <tr><td style="background:#1a1a1a;padding:20px 32px 24px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="33%" style="text-align:center;padding:0 8px;">
+          <div style="color:rgba(255,255,255,0.35);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">01 — STRUCTURE</div>
+          <a href="https://vdt-advocaten.nl/vdt-advocaten-tilburg/ons-team/team-bedrijfsstructuur/" style="color:#ffffff;font-size:12px;text-decoration:none;">Voor jouw bedrijf →</a>
+        </td>
+        <td width="33%" style="text-align:center;padding:0 8px;border-left:1px solid #333;border-right:1px solid #333;">
+          <div style="color:rgba(255,255,255,0.35);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">02 — BUSINESS</div>
+          <a href="https://vdt-advocaten.nl" style="color:#ffffff;font-size:12px;text-decoration:none;">Voor jouw business →</a>
+        </td>
+        <td width="33%" style="text-align:center;padding:0 8px;">
+          <div style="color:rgba(255,255,255,0.35);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">03 — PEOPLE</div>
+          <a href="https://vdt-advocaten.nl/vdt-advocaten-tilburg/ons-team/team-mens-arbeid/" style="color:#ffffff;font-size:12px;text-decoration:none;">Voor jouw mensen →</a>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- FOOTER -->
+  <tr><td style="background:#111111;padding:24px 32px;border-top:1px solid #2a2a2a;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="33%" valign="top" style="padding-right:16px;">
+          <div style="color:rgba(255,255,255,0.4);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">BEZOEK &amp; POST</div>
+          <div style="color:rgba(255,255,255,0.65);font-size:12px;line-height:1.9;">Hart van Brabantlaan 500<br>5038 JA Tilburg<br>Postbus 4203, 5004 JE Tilburg</div>
+        </td>
+        <td width="33%" valign="top" style="padding-right:16px;">
+          <div style="color:rgba(255,255,255,0.4);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">CONTACT</div>
+          <div style="color:rgba(255,255,255,0.65);font-size:12px;line-height:1.9;">013 544 0400<br><a href="mailto:lovetilburg@vdt-advocaten.nl" style="color:${ac};text-decoration:none;">lovetilburg@vdt-advocaten.nl</a></div>
+        </td>
+        <td width="33%" valign="top">
+          <div style="color:rgba(255,255,255,0.4);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">VOLG ONS</div>
+          <div style="color:rgba(255,255,255,0.65);font-size:12px;line-height:1.9;">
+            <a href="https://linkedin.com/company/vdt-advocaten" style="color:${ac};text-decoration:none;">LinkedIn</a><br>
+            <a href="https://vdt-advocaten.nl" style="color:${ac};text-decoration:none;">Website</a>
+          </div>
+        </td>
+      </tr>
+    </table>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #222222;color:rgba(255,255,255,0.25);font-size:11px;line-height:1.7;">
+      Je ontvangt deze e-mail omdat je je hebt aangemeld voor de VDT Advocaten nieuwsbrief of omdat je klant bij ons bent.<br>
+      Geen updates meer ontvangen? <a href="#" style="color:rgba(255,255,255,0.4);">Uitschrijven kan hier</a> &nbsp;·&nbsp; <a href="https://vdt-advocaten.nl" style="color:rgba(255,255,255,0.4);">Privacyverklaring</a><br>
+      © ${new Date().getFullYear()} VDT Advocaten · Tilburg
+    </div>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body>
+</html>`
+}
+
+function parseNewsletterFields(raw) {
+  const fields = {}
+  const lines = raw.split('\n')
+  let currentKey = null
+  let currentValue = []
+
+  for (const line of lines) {
+    const match = line.match(/^([A-Z_0-9]+):\s*(.*)$/)
+    if (match) {
+      if (currentKey) fields[currentKey] = currentValue.join('\n').trim()
+      currentKey = match[1]
+      currentValue = [match[2]]
+    } else if (currentKey) {
+      currentValue.push(line)
+    }
+  }
+  if (currentKey) fields[currentKey] = currentValue.join('\n').trim()
+  return fields
 }
 
 export async function generateContent(apiKey, type, formData) {
@@ -282,9 +497,29 @@ export async function generateContent(apiKey, type, formData) {
     const msg = data?.error?.message || 'Er ging iets mis bij Gemini.'
     throw new Error(msg)
   }
-  // Collect all text parts (search grounding may split into multiple parts)
   const parts = data.candidates?.[0]?.content?.parts || []
-  return parts.map(p => p.text || '').join('')
+  const raw = parts.map(p => p.text || '').join('')
+
+  if (type === 'newsletter') {
+    const pijlerKleur = {
+      'Praktijkinzichten': '#2FA766',
+      'Praktijkcases': '#007F81',
+      'Netwerk & Events': '#E74049',
+      'Mensen achter VDT': '#F4C200',
+    }[formData.pijler] || '#2FA766'
+
+    const today = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+    const fields = parseNewsletterFields(raw)
+    fields.DOELGROEP = formData.doelgroep
+
+    const subject = fields.ONDERWERPREGEL || ''
+    const preheader = fields.PREHEADER || ''
+    const html = buildNewsletterHtml(fields, pijlerKleur, today)
+
+    return `ONDERWERPREGEL: ${subject}\nPREHEADER: ${preheader}\nHTML:\n${html}`
+  }
+
+  return raw
 }
 
 
