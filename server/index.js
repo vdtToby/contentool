@@ -2,12 +2,33 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import Anthropic from '@anthropic-ai/sdk'
+import multer from 'multer'
+import { OpenAI } from 'openai'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import crypto from 'crypto'
 
 dotenv.config()
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const TODOS_FILE = path.join(__dirname, 'todos.json')
+
+function loadTodos() {
+  if (!fs.existsSync(TODOS_FILE)) return []
+  try { return JSON.parse(fs.readFileSync(TODOS_FILE, 'utf8')) } catch { return [] }
+}
+
+function saveTodos(todos) {
+  fs.writeFileSync(TODOS_FILE, JSON.stringify(todos, null, 2))
+}
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } })
+
 const app = express()
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '20mb' }))
 
 const BRAND_SYSTEM_PROMPT = `Je bent de contentschrijver van VDT Advocaten (Tilburg, sinds 1994). Je schrijft altijd volgens de volgende merkrichtlijnen:
 
@@ -173,6 +194,82 @@ app.post('/api/generate', async (req, res) => {
   } catch (err) {
     console.error('Gemini API error:', err)
     res.status(500).json({ error: err.message || 'Er ging iets mis bij het genereren van content.' })
+  }
+})
+
+// ── Todo CRUD ──────────────────────────────────────────────
+app.get('/api/todos', (req, res) => {
+  res.json(loadTodos())
+})
+
+app.post('/api/todos', (req, res) => {
+  const { text, priority = 'normal', labels = [] } = req.body
+  if (!text?.trim()) return res.status(400).json({ error: 'text is verplicht' })
+  const todos = loadTodos()
+  const todo = { id: crypto.randomUUID(), text: text.trim(), done: false, priority, labels, createdAt: new Date().toISOString(), completedAt: null }
+  todos.unshift(todo)
+  saveTodos(todos)
+  res.json(todo)
+})
+
+app.patch('/api/todos/:id', (req, res) => {
+  const todos = loadTodos()
+  const idx = todos.findIndex(t => t.id === req.params.id)
+  if (idx === -1) return res.status(404).json({ error: 'Niet gevonden' })
+  const updates = req.body
+  if (updates.done === true && !todos[idx].completedAt) updates.completedAt = new Date().toISOString()
+  if (updates.done === false) updates.completedAt = null
+  todos[idx] = { ...todos[idx], ...updates }
+  saveTodos(todos)
+  res.json(todos[idx])
+})
+
+app.delete('/api/todos/:id', (req, res) => {
+  const todos = loadTodos()
+  const filtered = todos.filter(t => t.id !== req.params.id)
+  saveTodos(filtered)
+  res.json({ ok: true })
+})
+
+// ── Screenshot OCR ─────────────────────────────────────────
+app.post('/api/ocr', async (req, res) => {
+  const { imageBase64, mediaType = 'image/png' } = req.body
+  if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is verplicht' })
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY niet ingesteld' })
+  try {
+    const client = new Anthropic({ apiKey })
+    const msg = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
+          { type: 'text', text: 'Extraheer alle tekst uit deze screenshot. Geef alleen de tekst terug, geen uitleg. Als het een taak of actie-item lijkt, maak er dan een beknopte taakformulering van.' }
+        ]
+      }]
+    })
+    res.json({ text: msg.content[0].text })
+  } catch (err) {
+    console.error('OCR error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── Whisper transcriptie ────────────────────────────────────
+app.post('/api/whisper', upload.single('audio'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'audio bestand verplicht' })
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY niet ingesteld' })
+  try {
+    const openai = new OpenAI({ apiKey })
+    const file = new File([req.file.buffer], req.file.originalname || 'audio.webm', { type: req.file.mimetype })
+    const transcription = await openai.audio.transcriptions.create({ model: 'whisper-1', file, language: 'nl' })
+    res.json({ text: transcription.text })
+  } catch (err) {
+    console.error('Whisper error:', err)
+    res.status(500).json({ error: err.message })
   }
 })
 

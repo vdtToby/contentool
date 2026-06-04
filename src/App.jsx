@@ -6,11 +6,12 @@ import NewsletterGenerator from './components/NewsletterGenerator.jsx'
 import Planning from './components/Planning.jsx'
 import OutputPanel from './components/OutputPanel.jsx'
 import ApiKeySetup from './components/ApiKeySetup.jsx'
+import TodoApp from './components/TodoApp.jsx'
 import { generateContent, generateVisualPrompt } from './gemini.js'
 
 export default function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('vdt_gemini_key') || '')
-  const [activeTab, setActiveTab] = useState('linkedin')
+  const [activeTab, setActiveTab] = useState('todo')
   const [output, setOutput] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -67,12 +68,17 @@ export default function App() {
     <Layout onLogout={handleLogout}>
       <TabBar activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); handleClear() }} />
 
-      {activeTab === 'planning' ? (
+      {activeTab === 'todo' ? (
+        <div className="mt-6">
+          <TodoApp />
+        </div>
+      ) : activeTab === 'planning' ? (
         <div className="mt-6">
           <Planning apiKey={apiKey} />
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
           <div>
             {activeTab === 'linkedin' && (
               <LinkedInGenerator onGenerate={handleGenerate} loading={loading} />

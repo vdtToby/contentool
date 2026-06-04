@@ -1,0 +1,11 @@
+{
+  "name": "VDT Todo",
+  "short_name": "Todo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#2FA766",
+  "icons": [
+    { "src": "/vdt-icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
