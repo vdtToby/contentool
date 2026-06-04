@@ -255,78 +255,69 @@ export async function generateContent(apiKey, type, formData) {
 
 
 const VDT_VISUAL_DNA = `
-== VDT ADVOCATEN — VISUAL IDENTITY GUIDE FOR IMAGE PROMPTS ==
+== VDT ADVOCATEN — VISUAL IDENTITY FOR IMAGE GENERATION ==
 
-CORE RULE: NO PEOPLE IN THE IMAGE. Zero people, zero body parts, zero silhouettes.
-The image must feel personal and human through objects, details and environment — not through showing humans.
+BRAND PALETTE — use these colors prominently, not as tiny accents:
+- VDT Green #2FA766: the dominant brand color — use as background, color block, large surface
+- VDT Teal #007F81: darker companion — shadows, secondary blocks, depth
+- VDT Red #E74049: warm accent — small pop of color, never dominant
+- VDT Yellow #F4C200: energy accent — highlight detail, sticky note, small object
+- Off-white #F7F7F5: clean background tone
+- Warm dark #1A1A1A: deep contrast for shadows or text areas
 
-BRAND COLORS (use at least one, never forced or overwhelming):
-- Primary green: #2FA766 — appear in: coffee mug, plant, folder, pen, sticky note, book spine, accent wall stripe, door frame, chair fabric
-- Teal: #007F81 — darker accent, lamp shade, binding of a book, decorative object
-- Warm white and light gray: dominant background tones
-- Natural wood: desks, tables, floors — warm and grounded
-- NEVER: cold blue corporate tones, harsh fluorescent lighting
+VISUAL STYLE — graphic editorial, NOT photo-realistic stock:
+- Think: modern Dutch design studio. Clean, bold, confident.
+- Strong color blocks combined with real-world objects or textures
+- Shallow depth of field photography layered with graphic color elements
+- OR: flat-lay object photography on VDT green background
+- Paper texture, concrete, warm wood — combine with brand color overlays
+- NOT: generic white-background stock. NOT: corporate cold blue. NOT: cliché legal imagery.
 
-PHOTOGRAPHY STYLE:
-- Still life / object photography with editorial warmth
-- Shot with a mirrorless camera, 35mm or 50mm lens equivalent
-- Warm white balance (not cool/clinical)
-- Shallow depth of field (f/1.8 to f/2.8) — sharp foreground object, softly blurred background
-- Natural window light as key light, soft shadows
-- Slightly warm, film-like color grade — think Fujifilm simulation
-- NOT a stock photo. NOT a flat lay. NOT symmetrical corporate still life.
+TWO APPROACHES THAT WORK WELL:
+Option A — Color-block object photo: Objects photographed from above (flat lay) on a solid VDT green (#2FA766) background. Objects are warm and personal — a notebook, pen, coffee cup, plant cutting. High contrast, bold.
+Option B — Editorial still life: Objects in natural environment, but with strong VDT green element dominating the frame (a large green folder, green chair, green wall panel behind desk objects). Warm film-like photography style.
 
-HUMANIZING DETAILS — make it feel like someone just stepped away:
-- A coffee mug with a small amount of coffee still in it, slight steam
-- An open notebook with handwritten notes (illegible but natural-looking)
-- A blazer draped over the back of a chair
-- Reading glasses resting on a document
-- A pen lying diagonally across an open page
-- Post-its with scribbled notes on a monitor edge
-- A half-eaten lunch next to a keyboard
-- An open laptop with a document visible (no readable text)
-- Car keys or a phone face-down next to a coffee cup
-- A bookmarked legal book open on a desk
+HUMANIZING DETAILS — no people, but personal feel:
+- An open notebook with handwritten notes (illegible but real-looking)
+- A coffee mug with slight steam
+- A blazer draped over a chair (VDT green lining visible)
+- Reading glasses on a document
+- A pen diagonal across an open page
+- Post-its with scribbled notes
+- A bookmarked book open on a desk
+- Car keys or phone face-down next to a coffee cup
+- Business cards scattered after a meeting
 
-SETTINGS:
-- Modern office desk with plants, warm wood surfaces, natural window light
-- Glass-walled meeting room seen from outside — chairs, table, a jacket on a seat
-- A café or brasserie table — coffee cups, glasses, a notebook — after a meeting
-- A Tilburg street scene at golden hour with no people — an office building entrance, a bicycle leaning against a wall
-- A windowsill with plants and a coffee mug overlooking a Tilburg street
-
-MOOD:
-- Warm, lived-in, real. Tilburg: nuchter met pit.
-- The feeling: someone competent and approachable works here — and just stepped out for a moment
-- NOT: cold, sterile, generic corporate, overly designed
-
-FORMAT: Square (1:1), optimized for LinkedIn feed — strong focal point, not too busy
+FORMAT: Square (1:1), LinkedIn feed — strong single focal point, clean composition, not busy
 
 ABSOLUTE DON'TS:
-- No people, no body parts, no hands, no silhouettes, no reflections of people
-- No scales of justice, gavels, or legal clichés
-- No stock-photo flat lay compositions
-- No lightbulbs, arrows, puzzle pieces
-- No text overlays or logos
-- No all-white backgrounds
-- No more than 3 distinct objects as focal points
+- No people, no hands, no body parts, no silhouettes
+- No scales of justice, gavels, legal clichés
+- No lightbulbs, arrows, puzzle pieces, generic icons
+- No text overlays (logo will be added separately in Canva)
+- No cold blue tones
+- No more than 3–4 objects as focal points
 `
 
 const PILLAR_SCENES = {
   'Praktijkinzichten': {
-    scene: 'A wooden desk with an open notebook filled with handwritten notes, a green coffee mug with steam rising, and a pen resting diagonally across the page. Warm window light from the left. A plant blurred softly in the background.',
-    mood: 'thoughtful expertise — someone has been working through something important here',
+    sceneA: 'Flat lay on solid VDT green (#2FA766) background: an open notebook with handwritten notes, a white ceramic mug, a yellow (#F4C200) sticky note with scribbled text, a black pen diagonal. Overhead shot, sharp, clean shadows.',
+    sceneB: 'A wooden desk surface with warm window light: an open legal document with handwritten annotations, reading glasses resting on it, a VDT-green coffee mug in the corner, a small plant blurred softly behind.',
+    mood: 'clarity, expertise made accessible — someone is figuring something out here',
   },
   'Praktijkcases': {
-    scene: 'Two open documents side by side on a desk — one printed contract with a few handwritten annotations, one open laptop showing a text document. Reading glasses resting on the contract. Warm desk lamp light.',
-    mood: 'a case being worked — real, detailed, in progress',
+    sceneA: 'Flat lay on VDT teal (#007F81) surface: two documents side by side, one with highlighted passages, a red (#E74049) paperclip, a pen, a small calculator. Clean overhead composition.',
+    sceneB: 'A glass-topped meeting table with warm light: two open documents spread out, a VDT-green folder closed to the side, a coffee cup, reading glasses. Slightly angled shot, shallow depth of field.',
+    mood: 'a case being worked through — real, detailed, in progress',
   },
   'Netwerk & Events': {
-    scene: 'A high café table after a networking event: two empty wine glasses, a small VDT-green branded notebook, business cards scattered naturally, warm evening brasserie light in background out of focus.',
-    mood: 'the aftermath of a good conversation — the Mosselborrel or Vastgoedborrel vibe',
+    sceneA: 'Flat lay on warm dark wood: two empty wine glasses, a small VDT-green notebook, three business cards scattered naturally, a cocktail napkin folded. Warm candlelight-style lighting.',
+    sceneB: 'A café high table after a networking event: wine glasses, VDT-green branded notepad, business cards, warm evening brasserie light blurred in background. Slightly angled, editorial feel.',
+    mood: 'the warm aftermath of a good conversation — Mosselborrel or Vastgoedborrel vibe',
   },
   'Mensen achter VDT': {
-    scene: 'A smart blazer draped naturally over an office chair, a coffee mug on the desk next to a phone face-down, a plant on the windowsill behind. Soft natural light. Feels like someone will be right back.',
+    sceneA: 'Flat lay on VDT green (#2FA766): a smart blazer folded, a leather notebook, a pen, a small succulent plant, business cards. Personal and warm. Overhead, clean.',
+    sceneB: 'An office chair with a blazer draped over it naturally, VDT-green interior detail visible, a desk lamp casting warm light, a coffee mug on the desk beside it. Nobody present — but feels lived-in.',
     mood: 'personal, warm — a real person works here, not a corporate placeholder',
   },
 }
@@ -335,48 +326,45 @@ export async function generateVisualPrompt(apiKey, type, formData) {
   const { onderwerp, pijler, doelgroep } = formData
 
   const pillarData = PILLAR_SCENES[pijler] || {
-    scene: 'Two professionals in a modern Tilburg office, engaged in focused conversation over documents and coffee.',
-    mood: 'professional yet human, warm and approachable',
+    sceneA: 'Flat lay on VDT green (#2FA766) background: an open notebook, a pen, a coffee mug, a small plant. Overhead, clean, editorial.',
+    sceneB: 'A wooden office desk with VDT-green folder, open document, coffee mug. Warm window light, shallow depth of field.',
+    mood: 'professional yet warm and human',
   }
 
   const doelgroepDetail = {
-    'Ondernemers': 'The non-lawyer in the scene looks like an entrepreneur — energetic, practical, business casual, maybe a bit informal.',
-    'Accountants': 'The setting has a slightly more structured/financial feel — papers, numbers visible in background.',
-    'Vastgoedprofessionals': 'Background hints at real estate context — building blueprints, a scale model, or a modern building exterior visible.',
-    'HR-professionals': 'Setting suggests a people/organizational context — open office floor visible, or HR-related documents.',
-    'Financieel professionals': 'Atmosphere is sharp and precise — clean desk, financial documents, subtle financial data on a screen in background.',
+    'Ondernemers': 'Objects hint at an entrepreneurial context: a business plan printout, a calculator, maybe a company name card visible.',
+    'Accountants': 'Objects suggest a financial/numbers context: printed spreadsheet edge visible, a calculator, structured paperwork.',
+    'Vastgoedprofessionals': 'Hint at real estate: a floor plan edge, a small architectural model, a key on the desk.',
+    'HR-professionals': 'Hint at people management: an org chart printout, a "team" document header visible but illegible.',
+    'Financieel professionals': 'Sharp, precise objects: financial document, a small calculator, clean desk, precise composition.',
   }[doelgroep] || ''
 
-  const prompt = `You are an expert creative director writing image generation prompts for a Dutch law firm's LinkedIn visuals.
+  const prompt = `You are a creative director for a modern Dutch law firm, VDT Advocaten (Tilburg). Write ONE precise English image generation prompt for their LinkedIn.
 
 BRAND IDENTITY:
 ${VDT_VISUAL_DNA}
 
-YOUR TASK:
-Write ONE precise English image prompt (100–140 words) for a LinkedIn post about:
-Topic: "${onderwerp}"
-Content pillar: ${pijler}
+POST TOPIC: "${onderwerp}"
+CONTENT PILLAR: ${pijler}
 
-Base scene to work from:
-${pillarData.scene}
+TWO SCENE OPTIONS TO CHOOSE FROM (pick the one that fits the topic best, or combine elements):
+Option A: ${pillarData.sceneA}
+Option B: ${pillarData.sceneB}
 
-Mood to capture:
-${pillarData.mood}
+TARGET AUDIENCE DETAIL: ${doelgroepDetail}
 
-Audience detail:
-${doelgroepDetail}
+MOOD: ${pillarData.mood}
 
-PROMPT WRITING RULES:
-1. Start with the photography style descriptor (still life, editorial warmth, etc.)
-2. Describe the objects and environment specifically — NO people, NO body parts
-3. Include humanizing details: a steaming mug, open notebook, draped blazer, etc.
-4. Include one VDT brand color detail naturally (green mug, teal folder, etc.)
-5. Specify lighting (warm window light, golden hour, soft shadows) and lens feel (shallow depth of field)
-6. End with: "Square format. No people. No text overlays. Not a stock photo."
+WRITE THE PROMPT — follow these rules exactly:
+1. Start with photography/style descriptor: "Editorial still life photography..." or "Clean overhead flat-lay photography..."
+2. Describe the dominant VDT color used (green #2FA766 or teal #007F81) as a major surface or element
+3. List the specific objects in the scene (3–4 max), including at least one humanizing detail
+4. Add one small accent color detail (red #E74049 or yellow #F4C200 object)
+5. Describe lighting and depth of field
+6. Relate at least one object subtly to the topic: "${onderwerp}"
+7. End with: "Square 1:1 format. No people, no hands, no text, no logos. Not a stock photo."
 
-Adapt the base scene creatively to the specific topic "${onderwerp}" — use relevant objects that hint at the topic without showing people.
-
-Return ONLY the English image prompt. No preamble, no explanation.`
+Return ONLY the English prompt, 110–150 words. No explanation.`
 
   const body = {
     contents: [{ parts: [{ text: prompt }] }],

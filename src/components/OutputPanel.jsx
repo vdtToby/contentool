@@ -64,32 +64,40 @@ function VisualPromptBlock({ loading, prompt, error }) {
       )}
 
       {prompt && (
-        <div className="mt-3 flex gap-2 flex-wrap">
-          <a
-            href="https://www.canva.com/ai-image-generator/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-[#2FA766] border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#2FA766] transition-colors"
-          >
-            Canva AI ↗
-          </a>
-          <a
-            href="https://firefly.adobe.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-[#2FA766] border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#2FA766] transition-colors"
-          >
-            Adobe Firefly ↗
-          </a>
-          <a
-            href="https://chatgpt.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-[#2FA766] border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#2FA766] transition-colors"
-          >
-            ChatGPT (DALL-E) ↗
-          </a>
-        </div>
+        <>
+          <div className="mt-3 flex gap-2 flex-wrap">
+            <a
+              href="https://www.canva.com/ai-image-generator/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-[#2FA766] border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#2FA766] transition-colors"
+            >
+              Canva AI ↗
+            </a>
+            <a
+              href="https://firefly.adobe.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-[#2FA766] border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#2FA766] transition-colors"
+            >
+              Adobe Firefly ↗
+            </a>
+            <a
+              href="https://chatgpt.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-[#2FA766] border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#2FA766] transition-colors"
+            >
+              ChatGPT (DALL-E) ↗
+            </a>
+          </div>
+          <div className="mt-3 rounded-lg bg-[#2FA76610] border border-[#2FA76630] px-3 py-2.5">
+            <p className="text-xs font-semibold text-[#2FA766] mb-1">💡 VDT-logo toevoegen</p>
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Genereer de afbeelding → open in <strong>Canva</strong> → voeg het VDT-logo toe als overlay (rechtsboven of linksonder). Zo is elke visual direct herkenbaar als VDT.
+            </p>
+          </div>
+        </>
       )}
     </div>
   )
