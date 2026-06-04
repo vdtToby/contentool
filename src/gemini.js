@@ -264,7 +264,8 @@ KOFFIE_VRAAG: [1 zin uitnodiging specifiek voor dit onderwerp — bijv. "Benieuw
 function buildNewsletterHtml(fields, pijlerKleur, today) {
   const ac = pijlerKleur
   const acLight = ac + '18'
-  const get = (key) => fields[key] || ''
+  const esc = (str) => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  const get = (key) => esc(fields[key] || '')
 
   return `<!DOCTYPE html>
 <html lang="nl">
@@ -452,15 +453,26 @@ function buildNewsletterHtml(fields, pijlerKleur, today) {
 </html>`
 }
 
+const NEWSLETTER_FIELD_KEYS = new Set([
+  'ONDERWERPREGEL','PREHEADER','EDITIE_LABEL','HERO_TITEL','LEAD_VRAAG','LEAD_TEKST',
+  'BULLET_1','BULLET_2','BULLET_3','BULLET_4',
+  'SECTIE_LABEL','SECTIE_TITEL','SECTIE_TEKST',
+  'PUNT_01_TITEL','PUNT_01_TEKST','PUNT_02_TITEL','PUNT_02_TEKST','PUNT_03_TITEL','PUNT_03_TEKST',
+  'KAART_1_LABEL','KAART_1_TITEL','KAART_1_TEKST',
+  'KAART_2_LABEL','KAART_2_TITEL','KAART_2_TEKST',
+  'SLOTCITAAT','KOFFIE_VRAAG',
+])
+
 function parseNewsletterFields(raw) {
+  const cleaned = raw.replace(/^```[a-z]*\n?/im, '').replace(/```\s*$/im, '').trim()
   const fields = {}
-  const lines = raw.split('\n')
+  const lines = cleaned.split('\n')
   let currentKey = null
   let currentValue = []
 
   for (const line of lines) {
     const match = line.match(/^([A-Z_0-9]+):\s*(.*)$/)
-    if (match) {
+    if (match && NEWSLETTER_FIELD_KEYS.has(match[1])) {
       if (currentKey) fields[currentKey] = currentValue.join('\n').trim()
       currentKey = match[1]
       currentValue = [match[2]]
