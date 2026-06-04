@@ -6,7 +6,7 @@ import NewsletterGenerator from './components/NewsletterGenerator.jsx'
 import Planning from './components/Planning.jsx'
 import OutputPanel from './components/OutputPanel.jsx'
 import ApiKeySetup from './components/ApiKeySetup.jsx'
-import { generateContent } from './gemini.js'
+import { generateContent, generateVisual } from './gemini.js'
 
 export default function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('vdt_gemini_key') || '')
@@ -14,6 +14,9 @@ export default function App() {
   const [output, setOutput] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [visual, setVisual] = useState(null)
+  const [visualLoading, setVisualLoading] = useState(false)
+  const [visualError, setVisualError] = useState(null)
 
   function handleKeyChange(newKey) {
     setApiKey(newKey)
@@ -30,10 +33,18 @@ export default function App() {
     setLoading(true)
     setError(null)
     setOutput(null)
+    setVisual(null)
+    setVisualError(null)
 
     try {
       const content = await generateContent(apiKey, type, formData)
       setOutput({ type, content })
+      // Start visual generation in parallel (non-blocking for main content)
+      setVisualLoading(true)
+      generateVisual(apiKey, type, formData, content)
+        .then(v => setVisual(v))
+        .catch(err => setVisualError(err.message))
+        .finally(() => setVisualLoading(false))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -44,6 +55,8 @@ export default function App() {
   function handleClear() {
     setOutput(null)
     setError(null)
+    setVisual(null)
+    setVisualError(null)
   }
 
   if (!apiKey) {
@@ -74,6 +87,9 @@ export default function App() {
               loading={loading}
               error={error}
               onClear={handleClear}
+              visual={visual}
+              visualLoading={visualLoading}
+              visualError={visualError}
             />
           </div>
         </div>
