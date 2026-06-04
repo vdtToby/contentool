@@ -6,7 +6,7 @@ import NewsletterGenerator from './components/NewsletterGenerator.jsx'
 import Planning from './components/Planning.jsx'
 import OutputPanel from './components/OutputPanel.jsx'
 import ApiKeySetup from './components/ApiKeySetup.jsx'
-import { generateContent, generateVisual } from './gemini.js'
+import { generateContent, generateVisualPrompt } from './gemini.js'
 
 export default function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('vdt_gemini_key') || '')
@@ -39,9 +39,9 @@ export default function App() {
     try {
       const content = await generateContent(apiKey, type, formData)
       setOutput({ type, content })
-      // Start visual generation in parallel (non-blocking for main content)
+      // Generate image prompt in parallel (non-blocking)
       setVisualLoading(true)
-      generateVisual(apiKey, type, formData, content)
+      generateVisualPrompt(apiKey, type, formData)
         .then(v => setVisual(v))
         .catch(err => setVisualError(err.message))
         .finally(() => setVisualLoading(false))

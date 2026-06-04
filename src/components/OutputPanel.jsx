@@ -1,6 +1,100 @@
 import React, { useState, useRef } from 'react'
 import Spinner from './Spinner.jsx'
 
+function VisualPromptBlock({ loading, prompt, error }) {
+  const [copied, setCopied] = useState(false)
+
+  async function handleCopy() {
+    if (!prompt) return
+    try {
+      await navigator.clipboard.writeText(prompt)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {}
+  }
+
+  return (
+    <div className="mt-5 border-t border-gray-100 pt-5">
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Visual prompt</p>
+          <p className="text-xs text-gray-400 mt-0.5">Kopieer en plak in Canva AI, Adobe Firefly of DALL-E</p>
+        </div>
+        {prompt && (
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shrink-0"
+          >
+            {copied ? (
+              <>
+                <svg className="w-3.5 h-3.5 text-[#2FA766]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                Gekopieerd!
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Kopieer
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
+      {loading && !prompt && (
+        <div className="flex items-center gap-2 text-gray-400 text-xs py-4 justify-center">
+          <Spinner size="sm" />
+          <span>Beeldprompt wordt aangemaakt…</span>
+        </div>
+      )}
+      {error && !prompt && (
+        <p className="text-xs text-red-500 py-2">{error}</p>
+      )}
+      {prompt && (
+        <div
+          className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-3 text-xs text-gray-700 leading-relaxed font-mono cursor-pointer select-all"
+          onClick={handleCopy}
+          title="Klik om te kopiëren"
+        >
+          {prompt}
+        </div>
+      )}
+
+      {prompt && (
+        <div className="mt-3 flex gap-2 flex-wrap">
+          <a
+            href="https://www.canva.com/ai-image-generator/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-[#2FA766] border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#2FA766] transition-colors"
+          >
+            Canva AI ↗
+          </a>
+          <a
+            href="https://firefly.adobe.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-[#2FA766] border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#2FA766] transition-colors"
+          >
+            Adobe Firefly ↗
+          </a>
+          <a
+            href="https://chatgpt.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-[#2FA766] border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#2FA766] transition-colors"
+          >
+            ChatGPT (DALL-E) ↗
+          </a>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function parseNewsletter(content) {
   // Extract subject, preheader, and HTML body from the structured response
   const subjectMatch = content.match(/ONDERWERPREGEL:\s*(.+)/i)
@@ -203,42 +297,13 @@ export default function OutputPanel({ output, loading, error, onClear, visual, v
               </p>
             )}
 
-            {/* Visual block */}
+            {/* Visual prompt block */}
             {!isNewsletter && (visualLoading || visual || visualError) && (
-              <div className="mt-5 border-t border-gray-100 pt-5">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Visual</p>
-                  {visual && (
-                    <a
-                      href={`data:${visual.mimeType};base64,${visual.data}`}
-                      download="vdt-visual.jpg"
-                      className="text-xs font-medium text-[#2FA766] hover:underline flex items-center gap-1"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Download
-                    </a>
-                  )}
-                </div>
-                {visualLoading && !visual && (
-                  <div className="flex items-center gap-2 text-gray-400 text-xs py-6 justify-center">
-                    <Spinner size="sm" />
-                    <span>Visual wordt gegenereerd…</span>
-                  </div>
-                )}
-                {visualError && !visual && (
-                  <p className="text-xs text-red-500">{visualError}</p>
-                )}
-                {visual && (
-                  <img
-                    src={`data:${visual.mimeType};base64,${visual.data}`}
-                    alt="Gegenereerde visual"
-                    className="w-full rounded-lg object-cover"
-                    style={{ maxHeight: '400px' }}
-                  />
-                )}
-              </div>
+              <VisualPromptBlock
+                loading={visualLoading}
+                prompt={visual}
+                error={visualError}
+              />
             )}
           </>
         )}

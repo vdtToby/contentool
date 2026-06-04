@@ -332,49 +332,41 @@ Als de persoon niet zeker geïdentificeerd kan worden als medewerker van VDT Adv
   return parsed
 }
 
-const VDT_VISUAL_STYLE = `Photography style: candid, authentic, slightly raw. Shot on a phone or mirrorless camera with natural light.
-NOT a stock photo. NOT a studio shoot. NOT posed.
-Think: people at a Tilburg networking borrel, a lawyer and client talking over coffee, a quick handshake after a deal,
-colleagues reviewing documents at a wooden table, a casual walk-and-talk outside the office.
-Warm, real, slightly imperfect. VDT green (#2FA766) can appear subtly — in a jacket, a door, signage — but never forced.
-The photo should feel like it was taken by someone who was actually there.
-No text overlays. No logos. No clichéd business stock imagery (no handshakes in suits with fake smiles, no lightbulbs, no scales of justice).
-Format: square (1:1), suitable for LinkedIn.`
-
-export async function generateVisual(apiKey, type, formData, generatedText) {
+export async function generateVisualPrompt(apiKey, type, formData) {
   const { onderwerp, pijler, doelgroep } = formData
 
   const pijlerContext = {
-    'Praktijkinzichten': 'a lawyer sharing insights in a casual conversation, whiteboard or notepad visible',
-    'Praktijkcases': 'two people working through a problem together at a desk, papers spread out, focused',
-    'Netwerk & Events': 'a lively networking event in Tilburg, people mingling with drinks, warm atmosphere, evening light',
-    'Mensen achter VDT': 'VDT team member in their natural work environment, candid, approachable, Tilburg office feel',
-  }[pijler] || 'a professional but approachable office scene in Tilburg'
+    'Praktijkinzichten': 'een advocaat die inzichten deelt in een informeel gesprek, whiteboard of notitieboek zichtbaar',
+    'Praktijkcases': 'twee mensen die samen een probleem doorwerken aan een bureau, papieren uitgespreid, gefocust',
+    'Netwerk & Events': 'een levendig netwerkevenement in Tilburg, mensen mingelen met drankjes, warme sfeer, avondlicht',
+    'Mensen achter VDT': 'een VDT-teamlid in hun natuurlijke werkomgeving, candid, benaderbaar, Tilburgs kantoorgevoel',
+  }[pijler] || 'een professionele maar benaderbare kantooromgeving in Tilburg'
 
-  const doelgroepContext = {
-    'Ondernemers': 'The people in the scene look like entrepreneurs — energetic, practical, no-nonsense.',
-    'Accountants': 'The atmosphere is professional but collegial, spreadsheets or documents visible in background.',
-    'Vastgoedprofessionals': 'A building, property, or real estate context in the background.',
-    'HR-professionals': 'An HR or people-management setting — possibly a conversation about a personnel matter.',
-    'Financieel professionals': 'A financial professional environment — discreet, sharp, numbers in background.',
-  }[doelgroep] || ''
+  const prompt = `Je genereert een beeldprompt voor een LinkedIn-visual van VDT Advocaten (advocatenkantoor, Tilburg).
 
-  const prompt = `Create a photo for a LinkedIn post by VDT Advocaten (law firm, Tilburg, Netherlands).
+Onderwerp van de post: ${onderwerp}
+Contentpijler: ${pijler}
+Doelgroep: ${doelgroep}
+Scènerichting: ${pijlerContext}
 
-Topic of the post: ${onderwerp}
-Content pillar: ${pijler}
-Scene suggestion: ${pijlerContext}
-${doelgroepContext}
+Schrijf één Engelse beeldprompt (max 120 woorden) voor gebruik in Canva AI, Adobe Firefly of DALL-E.
 
-${VDT_VISUAL_STYLE}`
+Stijleisen voor de prompt:
+- Candid fotografiestijl, shot op telefoon of spiegelloze camera met natuurlijk licht
+- GEEN stockfoto's, GEEN studioshots, GEEN geposeerde beelden
+- Warm, echt, licht imperfect — alsof iemand er gewoon bij stond
+- VDT groen (#2FA766) mag subtiel aanwezig zijn in kleding of decor, nooit opzichtig
+- GEEN tekstoverlays, GEEN logo's, GEEN clichématige zakelijke beelden (geen neppe handdrukken in pakken, geen gloeilampen, geen weegschalen)
+- Vierkant formaat (1:1), geschikt voor LinkedIn
+
+Geef ALLEEN de beeldprompt terug, geen uitleg of inleiding.`
 
   const body = {
     contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
   }
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -383,16 +375,8 @@ ${VDT_VISUAL_STYLE}`
   )
 
   const data = await res.json()
-  if (!res.ok) {
-    throw new Error(data?.error?.message || 'Visual generatie mislukt.')
-  }
+  if (!res.ok) throw new Error(data?.error?.message || 'Prompt generatie mislukt.')
 
   const parts = data.candidates?.[0]?.content?.parts || []
-  const imagePart = parts.find(p => p.inline_data?.mime_type?.startsWith('image/'))
-  if (!imagePart) throw new Error('Geen afbeelding ontvangen van Gemini.')
-
-  return {
-    data: imagePart.inline_data.data,
-    mimeType: imagePart.inline_data.mime_type,
-  }
+  return parts.map(p => p.text || '').join('').trim()
 }
