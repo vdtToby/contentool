@@ -164,7 +164,7 @@ app.post('/api/generate', async (req, res) => {
   try {
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-flash-latest',
       systemInstruction: BRAND_SYSTEM_PROMPT,
     })
     const result = await model.generateContent(userPrompt)
