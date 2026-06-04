@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Spinner from './Spinner.jsx'
+import ColleagueSelector from './ColleagueSelector.jsx'
 import { CONTENT_PILLARS, DOELGROEPEN } from '../gemini.js'
 
 const defaultForm = {
@@ -12,6 +13,7 @@ const defaultForm = {
   extraContext: '',
   zoekWebsiteLink: false,
   websiteLink: '',
+  collega: null,
 }
 
 function Checkbox({ name, checked, onChange, label, sublabel }) {
@@ -33,7 +35,7 @@ function Checkbox({ name, checked, onChange, label, sublabel }) {
   )
 }
 
-export default function LinkedInGenerator({ onGenerate, loading }) {
+export default function LinkedInGenerator({ onGenerate, loading, apiKey }) {
   const [form, setForm] = useState(defaultForm)
 
   function handleChange(e) {
@@ -196,6 +198,13 @@ export default function LinkedInGenerator({ onGenerate, loading }) {
         )}
       </div>
 
+      {/* Schrijfstijl van collega */}
+      <ColleagueSelector
+        apiKey={apiKey}
+        value={form.collega}
+        onChange={(collega) => setForm(f => ({ ...f, collega }))}
+      />
+
       <button
         type="submit"
         disabled={loading || !form.onderwerp.trim() || !form.pijler}
@@ -205,7 +214,7 @@ export default function LinkedInGenerator({ onGenerate, loading }) {
         {loading ? (
           <><Spinner size="sm" color="white" /><span>Genereren…</span></>
         ) : (
-          'LinkedIn post genereren'
+          form.collega ? `Post genereren als ${form.collega.naam.split(' ')[0]}` : 'LinkedIn post genereren'
         )}
       </button>
     </form>

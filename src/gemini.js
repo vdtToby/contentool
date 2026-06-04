@@ -128,7 +128,16 @@ Altijd laagdrempelig en uitnodigend, nooit generiek:
 "Herkenbaar?" / "Sparren?" / "Bakje koffie?" / "Laat gerust iets weten." / "Bel me even." / "Vrijblijvend gesprek van een kwartier — meer hoeft dat niet te zijn."`
 
 export function buildLinkedInPrompt(formData) {
-  const { onderwerp, pijler, doelgroep, toon, gebruik12tje, hashtagsToevoegen, extraContext, websiteLink, zoekWebsiteLink } = formData
+  const { onderwerp, pijler, doelgroep, toon, gebruik12tje, hashtagsToevoegen, extraContext, websiteLink, zoekWebsiteLink, collega } = formData
+
+  const collegaInstructie = collega ? `
+== SCHRIJFSTIJL VAN DE AUTEUR ==
+De post wordt gepubliceerd door ${collega.naam}${collega.functie ? ` (${collega.functie})` : ''} — een collega van VDT Advocaten.
+Schrijf de tekst IN HUN STEM, alsof zij het zelf typen.
+Persoonlijke schrijfstijl: ${collega.stijlDetail || collega.stijlSamenvatting}
+Combineer dit met de VDT tone of voice hierboven: de VDT-waarden en -boodschap blijven leidend, maar de persoonlijkheid en het ritme van ${collega.naam} zijn duidelijk voelbaar.
+Denk aan: hoe schrijft deze persoon? Formeel of juist heel toegankelijk? Kort of wat uitgebreider? Persoonlijk of zakelijk? Gebruik die eigenheid.
+` : ''
 
   const linkInstructie = zoekWebsiteLink
     ? `- Zoek op vdt-advocaten.nl via Google Search naar de meest relevante pagina voor dit onderwerp: ofwel een teamlid (persoonspagina) ofwel een expertise-/dienstenpagina. Verwerk de gevonden URL op één natuurlijke plek in de tekst of CTA — niet als los blok, maar geïntegreerd.`
@@ -137,16 +146,17 @@ export function buildLinkedInPrompt(formData) {
     : ''
 
   return `${BRAND_SYSTEM_PROMPT}
-
+${collegaInstructie}
 ---
 
-Schrijf een LinkedIn-post voor VDT Advocaten.
+Schrijf een LinkedIn-post voor VDT Advocaten${collega ? ` (namens ${collega.naam})` : ''}.
 
 BEPAAL EERST (intern, niet tonen):
 - Doelgroep: ${doelgroep}
 - Contentpijler: ${pijler}
 - Kanaal: LinkedIn
 - Doel: zie pijlerspecificaties hierboven
+${collega ? `- Auteur: ${collega.naam} — schrijf in diens persoonlijke stijl, gecombineerd met VDT tone of voice` : ''}
 
 DAN SCHRIJF:
 Onderwerp / thema: ${onderwerp}
@@ -168,7 +178,15 @@ ${linkInstructie}
 }
 
 export function buildNewsletterPrompt(formData) {
-  const { onderwerp, pijler, doelgroep, typeNieuwsbrief, extraContext, websiteLink, zoekWebsiteLink } = formData
+  const { onderwerp, pijler, doelgroep, typeNieuwsbrief, extraContext, websiteLink, zoekWebsiteLink, collega } = formData
+
+  const collegaInstructie = collega ? `
+== SCHRIJFSTIJL VAN DE AUTEUR ==
+De nieuwsbrief wordt verstuurd vanuit ${collega.naam}${collega.functie ? ` (${collega.functie})` : ''}.
+Schrijf de tekst IN HUN STEM — persoonlijk, herkenbaar, niet als anoniem kantoorbericht.
+Persoonlijke schrijfstijl: ${collega.stijlDetail || collega.stijlSamenvatting}
+Combineer dit met de VDT tone of voice: de waarden en boodschap van VDT blijven leidend, maar de persoonlijkheid van ${collega.naam} is voelbaar in elke zin.
+` : ''
   const pijlerKleur = {
     'Praktijkinzichten': '#2FA766',
     'Praktijkcases': '#007F81',
@@ -183,23 +201,24 @@ export function buildNewsletterPrompt(formData) {
     : ''
 
   return `${BRAND_SYSTEM_PROMPT}
-
+${collegaInstructie}
 ---
 
-Schrijf een volledige e-mailnieuwsbrief voor VDT Advocaten.
+Schrijf een volledige e-mailnieuwsbrief voor VDT Advocaten${collega ? ` (namens ${collega.naam})` : ''}.
 
 BEPAAL EERST (intern, niet tonen):
 - Doelgroep: ${doelgroep}
 - Contentpijler: ${pijler}
 - Type: ${typeNieuwsbrief}
 - Doel: relaties warm houden, niet verkopen, gesprekken uitlokken
+${collega ? `- Auteur: ${collega.naam} — schrijf persoonlijk en herkenbaar vanuit hun schrijfstijl` : ''}
 
 DAN SCHRIJF:
 Onderwerp / thema: ${onderwerp}
 ${extraContext ? `Extra context: ${extraContext}` : ''}
 
 STRUCTUUR VAN DE MAILING:
-- Opening: kort, persoonlijk, geen formele introductie
+- Opening: kort, persoonlijk${collega ? ` — gebruik de naam ${collega.naam} en schrijf vanuit het ik-perspectief` : ''}, geen formele introductie
 - Hoofdonderwerp: 1 onderwerp, max 200 woorden
 - Concrete waarde: 3 inzichten / tips / aandachtspunten
 - Afsluiting: laagdrempelige CTA (Herkenbaar? Sparren? Laat gerust iets weten.)
@@ -249,6 +268,68 @@ export async function generateContent(apiKey, type, formData) {
   // Collect all text parts (search grounding may split into multiple parts)
   const parts = data.candidates?.[0]?.content?.parts || []
   return parts.map(p => p.text || '').join('')
+}
+
+export async function searchColleague(apiKey, naam) {
+  const prompt = `Zoek op LinkedIn naar een medewerker van VDT Advocaten in Tilburg die "${naam}" heet.
+
+Gebruik Google Search om:
+1. Het LinkedIn-profiel te vinden van deze persoon bij VDT Advocaten Tilburg
+2. Hun recente LinkedIn-posts te lezen (minimaal 5 posts als die beschikbaar zijn)
+3. Hun persoonlijke schrijfstijl te analyseren
+
+Geef je antwoord ALLEEN als JSON in dit exacte formaat (geen markdown, geen uitleg eromheen):
+{
+  "gevonden": true of false,
+  "naam": "volledige naam zoals op LinkedIn",
+  "functie": "functietitel",
+  "linkedinUrl": "https://linkedin.com/in/...",
+  "stijlSamenvatting": "één zin die de schrijfstijl samenvat (max 120 tekens)",
+  "stijlDetail": "uitgebreide beschrijving van hun schrijfstijl: gebruiken ze ik-perspectief? Korte of lange zinnen? Formeel of informeel? Humor? Persoonlijke anekdotes? Directe taal? Specifieke woorden of uitdrukkingen die ze vaker gebruiken?",
+  "zekerheid": "hoog / middel / laag"
+}
+
+Als de persoon niet zeker geïdentificeerd kan worden als medewerker van VDT Advocaten, zet "gevonden": false.`
+
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    tools: [{ google_search: {} }],
+  }
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }
+  )
+
+  const data = await res.json()
+  if (!res.ok) throw new Error(data?.error?.message || 'Zoeken mislukt.')
+
+  const parts = data.candidates?.[0]?.content?.parts || []
+  const raw = parts.map(p => p.text || '').join('').trim()
+
+  // Strip markdown code fences if present
+  const jsonStr = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+
+  let parsed
+  try {
+    parsed = JSON.parse(jsonStr)
+  } catch {
+    throw new Error('Kon het zoekresultaat niet verwerken. Probeer een volledigere naam.')
+  }
+
+  if (!parsed.gevonden) {
+    throw new Error(`Geen medewerker van VDT Advocaten gevonden met de naam "${naam}". Controleer de naam en probeer opnieuw.`)
+  }
+
+  if (parsed.zekerheid === 'laag') {
+    throw new Error(`Gevonden profiel is onzeker. Probeer een volledigere naam.`)
+  }
+
+  return parsed
 }
 
 const VDT_VISUAL_STYLE = `Photography style: candid, authentic, slightly raw. Shot on a phone or mirrorless camera with natural light.
