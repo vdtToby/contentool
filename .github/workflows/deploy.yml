@@ -1,0 +1,55 @@
+name: Deploy naar GitHub Pages
+
+on:
+  push:
+    branches: [claude/focused-davinci-blM6T, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  administration: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js instellen
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Dependencies installeren
+        run: npm ci
+
+      - name: App bouwen
+        run: npm run build
+        env:
+          VITE_BASE_URL: /contentool/
+
+      - name: Repo publiek maken (zodat Pages gratis werkt)
+        run: gh repo edit "$GITHUB_REPOSITORY" --visibility public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: GitHub Pages configureren
+        uses: actions/configure-pages@v4
+
+      - name: Build-bestanden uploaden
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deployen naar Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
