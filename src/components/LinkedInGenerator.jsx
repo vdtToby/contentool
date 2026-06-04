@@ -10,6 +10,8 @@ const defaultForm = {
   gebruik12tje: true,
   hashtagsToevoegen: true,
   extraContext: '',
+  zoekWebsiteLink: false,
+  websiteLink: '',
 }
 
 function Checkbox({ name, checked, onChange, label, sublabel }) {
@@ -166,6 +168,32 @@ export default function LinkedInGenerator({ onGenerate, loading }) {
           placeholder="Bijv. cao-wijzigingen, seizoensarbeid, aankomend event…"
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2FA766] focus:border-transparent resize-none"
         />
+      </div>
+
+      {/* Website link */}
+      <div className="rounded-lg border border-gray-200 p-3 space-y-2">
+        <Checkbox
+          name="zoekWebsiteLink"
+          checked={form.zoekWebsiteLink}
+          onChange={handleChange}
+          label="Koppel aan VDT-website"
+          sublabel="(AI zoekt passende pagina)"
+        />
+        {form.zoekWebsiteLink ? (
+          <p className="text-xs text-gray-400 pl-8">AI zoekt live op vdt-advocaten.nl naar het meest relevante teamlid of de passende expertise-pagina.</p>
+        ) : (
+          <div className="pl-8">
+            <input
+              type="url"
+              name="websiteLink"
+              value={form.websiteLink}
+              onChange={handleChange}
+              placeholder="https://vdt-advocaten.nl/expertise/..."
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2FA766] focus:border-transparent"
+            />
+            <p className="text-xs text-gray-400 mt-1">Optioneel — laat leeg als je geen link wil.</p>
+          </div>
+        )}
       </div>
 
       <button

@@ -125,7 +125,13 @@ De tekst mag NOOIT klinken als AI. Vermijd expliciet:
 Altijd laagdrempelig: "Herkenbaar?", "Sparren?", "Bakje koffie?", "Laat gerust iets weten.", vrijblijvend gesprek max 15 min.`
 
 export function buildLinkedInPrompt(formData) {
-  const { onderwerp, pijler, doelgroep, toon, gebruik12tje, hashtagsToevoegen, extraContext } = formData
+  const { onderwerp, pijler, doelgroep, toon, gebruik12tje, hashtagsToevoegen, extraContext, websiteLink, zoekWebsiteLink } = formData
+
+  const linkInstructie = zoekWebsiteLink
+    ? `- Zoek op vdt-advocaten.nl via Google Search naar de meest relevante pagina voor dit onderwerp: ofwel een teamlid (persoonspagina) ofwel een expertise-/dienstenpagina. Verwerk de gevonden URL op één natuurlijke plek in de tekst of CTA — niet als los blok, maar geïntegreerd.`
+    : websiteLink
+    ? `- Verwerk deze URL op één natuurlijke, niet-opdringerige plek in de tekst of CTA: ${websiteLink}`
+    : ''
 
   return `${BRAND_SYSTEM_PROMPT}
 
@@ -154,17 +160,24 @@ ${gebruik12tje ? '- Gebruik het 1-2-tje als hook of afsluiter' : ''}
 - Zachte, laagdrempelige CTA aan het einde
 ${hashtagsToevoegen ? '- Voeg 3-5 relevante hashtags toe' : ''}
 - Maximum 1300 tekens
+${linkInstructie}
 - De ideale reactie van de lezer: "Interessant, dit herken ik." of "Hier moet ik even iemand van VDT over bellen."`
 }
 
 export function buildNewsletterPrompt(formData) {
-  const { onderwerp, pijler, doelgroep, typeNieuwsbrief, extraContext } = formData
+  const { onderwerp, pijler, doelgroep, typeNieuwsbrief, extraContext, websiteLink, zoekWebsiteLink } = formData
   const pijlerKleur = {
     'Praktijkinzichten': '#2FA766',
     'Praktijkcases': '#007F81',
     'Netwerk & Events': '#E74049',
     'Mensen achter VDT': '#F4C200',
   }[pijler] || '#2FA766'
+
+  const linkInstructie = zoekWebsiteLink
+    ? `- Zoek op vdt-advocaten.nl via Google Search naar de meest relevante pagina voor dit onderwerp: ofwel een teamlid ofwel een expertise-/dienstenpagina. Verwerk de gevonden URL als klikbare hyperlink in de HTML — op één logische plek, geïntegreerd in de tekst of als secundaire CTA-link.`
+    : websiteLink
+    ? `- Verwerk deze URL als klikbare hyperlink in de HTML op een natuurlijke plek: ${websiteLink}`
+    : ''
 
   return `${BRAND_SYSTEM_PROMPT}
 
@@ -187,6 +200,7 @@ STRUCTUUR VAN DE MAILING:
 - Hoofdonderwerp: 1 onderwerp, max 200 woorden
 - Concrete waarde: 3 inzichten / tips / aandachtspunten
 - Afsluiting: laagdrempelige CTA (Herkenbaar? Sparren? Laat gerust iets weten.)
+${linkInstructie}
 
 HTML E-MAIL TECHNISCH:
 - Clean HTML met uitsluitend inline styles (geen <style> blokken)
@@ -206,13 +220,21 @@ HTML:
 
 export async function generateContent(apiKey, type, formData) {
   const prompt = type === 'linkedin' ? buildLinkedInPrompt(formData) : buildNewsletterPrompt(formData)
+  const useSearch = !!formData.zoekWebsiteLink
+
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    ...(useSearch ? { tools: [{ google_search: {} }] } : {}),
+  }
+
+  const model = useSearch ? 'gemini-2.5-flash' : 'gemini-flash-latest'
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      body: JSON.stringify(body),
     }
   )
 
@@ -221,5 +243,7 @@ export async function generateContent(apiKey, type, formData) {
     const msg = data?.error?.message || 'Er ging iets mis bij Gemini.'
     throw new Error(msg)
   }
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  // Collect all text parts (search grounding may split into multiple parts)
+  const parts = data.candidates?.[0]?.content?.parts || []
+  return parts.map(p => p.text || '').join('')
 }

@@ -8,6 +8,8 @@ const defaultForm = {
   doelgroep: 'Ondernemers',
   typeNieuwsbrief: 'Maandelijkse update',
   extraContext: '',
+  zoekWebsiteLink: false,
+  websiteLink: '',
 }
 
 export default function NewsletterGenerator({ onGenerate, loading }) {
@@ -138,6 +140,39 @@ export default function NewsletterGenerator({ onGenerate, loading }) {
           placeholder="Bijv. naam event, datum, spreker, specifieke wetgeving…"
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2FA766] resize-none"
         />
+      </div>
+
+      {/* Website link */}
+      <div className="rounded-lg border border-gray-200 p-3 space-y-2">
+        <label className="flex items-center gap-3 cursor-pointer group">
+          <div
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
+              form.zoekWebsiteLink ? 'border-[#2FA766] bg-[#2FA766]' : 'border-gray-300 bg-white group-hover:border-[#2FA766]'
+            }`}
+            onClick={() => setForm(f => ({ ...f, zoekWebsiteLink: !f.zoekWebsiteLink }))}
+          >
+            {form.zoekWebsiteLink && (
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+          <span className="text-sm text-gray-700">Koppel aan VDT-website <span className="text-gray-400 text-xs">(AI zoekt passende pagina)</span></span>
+        </label>
+        {form.zoekWebsiteLink ? (
+          <p className="text-xs text-gray-400 pl-8">AI zoekt live op vdt-advocaten.nl naar het meest relevante teamlid of de passende expertise-pagina.</p>
+        ) : (
+          <div className="pl-8">
+            <input
+              type="url"
+              value={form.websiteLink}
+              onChange={e => setForm(f => ({ ...f, websiteLink: e.target.value }))}
+              placeholder="https://vdt-advocaten.nl/expertise/..."
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2FA766] focus:border-transparent"
+            />
+            <p className="text-xs text-gray-400 mt-1">Optioneel — laat leeg als je geen link wil.</p>
+          </div>
+        )}
       </div>
 
       <button
