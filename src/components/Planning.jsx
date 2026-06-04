@@ -61,14 +61,25 @@ const TYPE_LABELS = {
   newsletter: 'Nieuwsbrief',
 }
 
-const PLANNING_PROMPT = `Stel een 4-weken LinkedIn-contentplanning voor voor VDT Advocaten.
-Gebruik de VDT Content Engine strategie:
-- Week 1-2: Herkenning (wie is VDT, veelgemaakte fouten, ondernemersvraagstukken)
-- Week 3-4: Autoriteit (inzichten, trends, praktijklessen)
-Wissel af tussen doelgroepen: Ondernemers, Accountants, Vastgoedprofessionals, HR-professionals, Financieel professionals.
-Wissel af tussen contentpijlers: Praktijkinzichten, Praktijkcases, Netwerk & Events, Mensen achter VDT.
+const PLANNING_PROMPT = `Je bent de contentstrateeg van VDT Advocaten (Tilburg), een praktisch MKB-advocatenkantoor.
 
-Geef precies 8 posts terug (2 per week), in dit JSON-formaat (alleen JSON, geen uitleg):
+OPDRACHT: Stel een actuele 4-weken LinkedIn-contentplanning voor ondernemers (NIET particulieren).
+
+STAP 1 — Onderzoek het volgende via Google Search:
+1. Meest recente nieuwsberichten, blogs of updates op vdt-advocaten.nl
+2. Wat posten andere MKB-advocatenkantoren in Nederland momenteel op LinkedIn of hun website? (bijv. BarentsKrans, Blenheim, Unger advocaten, La Gro, of vergelijkbare MKB-gerichte kantoren)
+3. Actuele juridische of arbeidsrechtelijke ontwikkelingen relevant voor Nederlandse ondernemers (bijv. wetswijzigingen, cao-nieuws, AVG-updates, arbeidsmarktnieuws)
+
+STAP 2 — Verwerk je bevindingen in een planning die:
+- Aansluit bij actuele thema's die nu leven bij MKB-ondernemers
+- Onderscheidend is ten opzichte van wat andere kantoren al posten
+- Past bij de VDT-tone of voice: menselijk, direct, geen jargon, altijd vanuit de ondernemer
+
+DOELGROEPEN (wissel af): Ondernemers, Accountants, Vastgoedprofessionals, HR-professionals, Financieel professionals
+PIJLERS (wissel af): Praktijkinzichten, Praktijkcases, Netwerk & Events, Mensen achter VDT
+STRATEGIE: Week 1-2 = Herkenning, Week 3-4 = Autoriteit
+
+Geef precies 8 posts terug in dit JSON-formaat (alleen JSON, geen uitleg, geen markdown):
 [
   {
     "week": 1,
@@ -76,7 +87,7 @@ Geef precies 8 posts terug (2 per week), in dit JSON-formaat (alleen JSON, geen 
     "pijler": "Praktijkinzichten",
     "doelgroep": "Ondernemers",
     "onderwerp": "...",
-    "toelichting": "..."
+    "toelichting": "Waarom dit onderwerp nu actueel is en welke invalshoek VDT kan nemen."
   }
 ]`
 
@@ -111,11 +122,14 @@ export default function Planning({ apiKey }) {
     setSuggestError(null)
     try {
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: PLANNING_PROMPT }] }] }),
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: PLANNING_PROMPT }] }],
+            tools: [{ google_search: {} }],
+          }),
         }
       )
       const data = await res.json()
@@ -237,7 +251,7 @@ export default function Planning({ apiKey }) {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
-              Planning genereren…
+              Zoekt actuele ontwikkelingen…
             </>
           ) : (
             <>
