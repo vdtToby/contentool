@@ -257,69 +257,77 @@ export async function generateContent(apiKey, type, formData) {
 const VDT_VISUAL_DNA = `
 == VDT ADVOCATEN — VISUAL IDENTITY GUIDE FOR IMAGE PROMPTS ==
 
+CORE RULE: NO PEOPLE IN THE IMAGE. Zero people, zero body parts, zero silhouettes.
+The image must feel personal and human through objects, details and environment — not through showing humans.
+
 BRAND COLORS (use at least one, never forced or overwhelming):
-- Primary green: #2FA766 — appear in: blazer/jacket lapel, coffee mug, plant, folder, accent wall stripe, pen, lanyard, door frame
-- Teal: #007F81 — darker accent, backgrounds, chair fabric
+- Primary green: #2FA766 — appear in: coffee mug, plant, folder, pen, sticky note, book spine, accent wall stripe, door frame, chair fabric
+- Teal: #007F81 — darker accent, lamp shade, binding of a book, decorative object
 - Warm white and light gray: dominant background tones
 - Natural wood: desks, tables, floors — warm and grounded
 - NEVER: cold blue corporate tones, harsh fluorescent lighting
 
 PHOTOGRAPHY STYLE:
-- Editorial-candid hybrid: looks real but well-composed
+- Still life / object photography with editorial warmth
 - Shot with a mirrorless camera, 35mm or 50mm lens equivalent
 - Warm white balance (not cool/clinical)
-- Shallow depth of field (f/2 to f/4) — sharp subject, slightly blurred background
-- Natural window light as key light, no harsh flash, no studio softbox look
+- Shallow depth of field (f/1.8 to f/2.8) — sharp foreground object, softly blurred background
+- Natural window light as key light, soft shadows
 - Slightly warm, film-like color grade — think Fujifilm simulation
-- NOT a stock photo. NOT posed. NOT symmetrical corporate composure.
+- NOT a stock photo. NOT a flat lay. NOT symmetrical corporate still life.
 
-PEOPLE:
-- Age: 30–55 years old, Dutch/European appearance
-- Dress code: smart casual — blazer without tie, open collar shirt, quality knitwear
-- NO suits with ties. NO power poses. NO fake smiles to camera.
-- Body language: leaning in, gesturing while talking, looking at documents together, laughing mid-conversation
-- Diverse but realistic for a Tilburg professional context
+HUMANIZING DETAILS — make it feel like someone just stepped away:
+- A coffee mug with a small amount of coffee still in it, slight steam
+- An open notebook with handwritten notes (illegible but natural-looking)
+- A blazer draped over the back of a chair
+- Reading glasses resting on a document
+- A pen lying diagonally across an open page
+- Post-its with scribbled notes on a monitor edge
+- A half-eaten lunch next to a keyboard
+- An open laptop with a document visible (no readable text)
+- Car keys or a phone face-down next to a coffee cup
+- A bookmarked legal book open on a desk
 
 SETTINGS:
-- Modern open office with plants, exposed concrete or brick, wooden desks
-- Glass-walled meeting rooms — visible but not sterile
-- Café or brasserie setting for networking scenes — warm lighting, high tables
-- Tilburg street or Hart van Brabantlaan exterior — subtle, not tourist-y
-- Outdoor terrace of a Tilburg venue, evening golden hour
+- Modern office desk with plants, warm wood surfaces, natural window light
+- Glass-walled meeting room seen from outside — chairs, table, a jacket on a seat
+- A café or brasserie table — coffee cups, glasses, a notebook — after a meeting
+- A Tilburg street scene at golden hour with no people — an office building entrance, a bicycle leaning against a wall
+- A windowsill with plants and a coffee mug overlooking a Tilburg street
 
 MOOD:
-- Professional but human. Warm but sharp. Tilburg: nuchter met pit.
-- The feeling: "these are people I'd want to grab a coffee with who also know their stuff"
-- NOT: cold, hierarchical, authoritative, distant, corporate-generic
+- Warm, lived-in, real. Tilburg: nuchter met pit.
+- The feeling: someone competent and approachable works here — and just stepped out for a moment
+- NOT: cold, sterile, generic corporate, overly designed
 
 FORMAT: Square (1:1), optimized for LinkedIn feed — strong focal point, not too busy
 
 ABSOLUTE DON'TS:
+- No people, no body parts, no hands, no silhouettes, no reflections of people
 - No scales of justice, gavels, or legal clichés
-- No stock-photo handshakes with teeth-showing fake smiles
+- No stock-photo flat lay compositions
 - No lightbulbs, arrows, puzzle pieces
 - No text overlays or logos
-- No overly symmetrical "hero" compositions
 - No all-white backgrounds
-- No more than 4 people in frame
+- No more than 3 distinct objects as focal points
 `
 
 const PILLAR_SCENES = {
   'Praktijkinzichten': {
-    scene: 'One lawyer leaning slightly forward across a small meeting table, one hand gesturing expressively, explaining something to a single client who nods — notepad and coffee cup on the table. Intimate, focused, warm.',
-    mood: 'moment of clarity and trust — the expert making something complex feel simple',
+    scene: 'A wooden desk with an open notebook filled with handwritten notes, a green coffee mug with steam rising, and a pen resting diagonally across the page. Warm window light from the left. A plant blurred softly in the background.',
+    mood: 'thoughtful expertise — someone has been working through something important here',
   },
   'Praktijkcases': {
-    scene: 'Two professionals side by side at a desk, both looking at the same document or laptop screen, one pointing at a specific line — collaborative, problem-solving energy. Papers spread out naturally.',
-    mood: 'working through a real challenge together — partnership in action',
+    scene: 'Two open documents side by side on a desk — one printed contract with a few handwritten annotations, one open laptop showing a text document. Reading glasses resting on the contract. Warm desk lamp light.',
+    mood: 'a case being worked — real, detailed, in progress',
   },
   'Netwerk & Events': {
-    scene: 'A group of 3–4 professionals at a standing high table in a warm brasserie or venue, holding drinks, mid-conversation and laughing. Evening warm light. One person with a VDT-green detail on their blazer or lanyard.',
-    mood: 'genuine connection at a Tilburg networking event — the Mosselborrel or Vastgoedborrel vibe',
+    scene: 'A high café table after a networking event: two empty wine glasses, a small VDT-green branded notebook, business cards scattered naturally, warm evening brasserie light in background out of focus.',
+    mood: 'the aftermath of a good conversation — the Mosselborrel or Vastgoedborrel vibe',
   },
   'Mensen achter VDT': {
-    scene: 'A single VDT team member photographed candidly in their natural work environment — looking slightly off-camera, mid-action (writing, picking up a phone, walking through office). Not a headshot. Real moment.',
-    mood: 'human, approachable, you\'d trust this person — warm and competent',
+    scene: 'A smart blazer draped naturally over an office chair, a coffee mug on the desk next to a phone face-down, a plant on the windowsill behind. Soft natural light. Feels like someone will be right back.',
+    mood: 'personal, warm — a real person works here, not a corporate placeholder',
   },
 }
 
@@ -359,14 +367,14 @@ Audience detail:
 ${doelgroepDetail}
 
 PROMPT WRITING RULES:
-1. Start with the photography style descriptor
-2. Describe the scene specifically (who, what, where, what are they doing)
-3. Include one VDT brand color detail naturally (green mug, teal folder, etc.)
-4. Specify lighting and lens feel
-5. End with technical format note
-6. Include a short negative clause: "Not a stock photo, no posed smiles, no text overlays"
+1. Start with the photography style descriptor (still life, editorial warmth, etc.)
+2. Describe the objects and environment specifically — NO people, NO body parts
+3. Include humanizing details: a steaming mug, open notebook, draped blazer, etc.
+4. Include one VDT brand color detail naturally (green mug, teal folder, etc.)
+5. Specify lighting (warm window light, golden hour, soft shadows) and lens feel (shallow depth of field)
+6. End with: "Square format. No people. No text overlays. Not a stock photo."
 
-Adapt the base scene creatively to the specific topic "${onderwerp}" if it makes the image more relevant.
+Adapt the base scene creatively to the specific topic "${onderwerp}" — use relevant objects that hint at the topic without showing people.
 
 Return ONLY the English image prompt. No preamble, no explanation.`
 
