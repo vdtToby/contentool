@@ -37,7 +37,8 @@ export const DOELGROEPEN = [
   { id: 'Ondernemers', label: 'Ondernemers' },
   { id: 'Accountants', label: 'Accountants' },
   { id: 'Vastgoedprofessionals', label: 'Vastgoed­professionals' },
-  { id: 'Relaties en netwerk', label: 'Relaties & netwerk' },
+  { id: 'HR-professionals', label: 'HR-professionals' },
+  { id: 'Financieel professionals', label: 'Financieel' },
 ]
 
 const BRAND_SYSTEM_PROMPT = `Je bent de contentschrijver van VDT Advocaten (Tilburg, sinds 1994).
@@ -67,7 +68,8 @@ Dat is het primaire succescriterium van alle content.
 - Ondernemers: groei, personeel, conflicten voorkomen, praktische oplossingen, ondernemen zonder juridische rompslomp
 - Accountants: werkgeverschap, ondernemerschap, risico's, klantvraagstukken, actualiteiten
 - Vastgoedprofessionals: transacties, samenwerking, contracten, risico's, praktijkervaringen
-- Relaties en netwerk: lokale ontwikkelingen, evenementen, ondernemerschap, zakelijke trends
+- HR-professionals: arbeidsrecht in de praktijk, personeelsdossiers, verzuim & re-integratie, ontslag & disfunctioneren, medezeggenschap, grensoverschrijdend gedrag, arbeidsmarktveranderingen. Schrijf als sparringpartner die HR ontlast — niet als advocaat die instrueert.
+- Financieel professionals (CFO's, controllers, financieel directeuren): aansprakelijkheid, bestuurdersrisico's, contractrisico's, overnames & herstructurering, governance, cashflow-impact van juridische keuzes. Schrijf zakelijk en cijfermatig ingesteld, vertaal juridische risico's naar financiële consequenties.
 
 == CONTENTPIJLERS ==
 Pijler 1 – Praktijkinzichten: autoriteit bouwen. Format: "Dit zien wij momenteel vaak gebeuren..."
