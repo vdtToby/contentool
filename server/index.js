@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 dotenv.config()
 
@@ -147,12 +147,10 @@ app.post('/api/generate', async (req, res) => {
     return res.status(400).json({ error: 'type en formData zijn verplicht' })
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
-    return res.status(500).json({ error: 'ANTHROPIC_API_KEY is niet ingesteld' })
+    return res.status(500).json({ error: 'GEMINI_API_KEY is niet ingesteld' })
   }
-
-  const client = new Anthropic({ apiKey })
 
   let userPrompt
   if (type === 'linkedin') {
@@ -164,19 +162,16 @@ app.post('/api/generate', async (req, res) => {
   }
 
   try {
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: BRAND_SYSTEM_PROMPT,
-      messages: [
-        { role: 'user', content: userPrompt },
-      ],
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      systemInstruction: BRAND_SYSTEM_PROMPT,
     })
-
-    const content = message.content[0]?.text || ''
+    const result = await model.generateContent(userPrompt)
+    const content = result.response.text()
     res.json({ content })
   } catch (err) {
-    console.error('Claude API error:', err)
+    console.error('Gemini API error:', err)
     res.status(500).json({ error: err.message || 'Er ging iets mis bij het genereren van content.' })
   }
 })

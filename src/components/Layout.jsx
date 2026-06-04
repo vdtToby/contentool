@@ -8,7 +8,7 @@ export default function Layout({ children }) {
       {DEMO_MODE && (
         <div className="bg-amber-50 border-b border-amber-200 text-center py-2 px-4">
           <p className="text-xs font-semibold text-amber-700">
-            ✦ DEMO-MODUS — Dit is een voorbeeldversie met vooraf geschreven teksten. De echte AI-generatie wordt later aangezet.
+            ✦ DEMO-MODUS — Dit is een voorbeeldversie met vooraf geschreven teksten. Voeg een gratis Gemini API-sleutel toe om echte AI-teksten te genereren.
           </p>
         </div>
       )}
