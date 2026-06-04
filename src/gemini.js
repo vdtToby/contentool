@@ -125,7 +125,42 @@ De tekst mag op geen enkele manier klinken als AI. De lezer mag het niet eens ve
 
 == CALL-TO-ACTION ==
 Altijd laagdrempelig en uitnodigend, nooit generiek:
-"Herkenbaar?" / "Sparren?" / "Bakje koffie?" / "Laat gerust iets weten." / "Bel me even." / "Vrijblijvend gesprek van een kwartier — meer hoeft dat niet te zijn."`
+"Herkenbaar?" / "Sparren?" / "Bakje koffie?" / "Laat gerust iets weten." / "Bel me even." / "Vrijblijvend gesprek van een kwartier — meer hoeft dat niet te zijn."
+
+== ECHTE VDT LINKEDIN-POSTS — GEBRUIK DIT ALS STIJLREFERENTIE ==
+Hieronder volgen recente posts van VDT Advocaten op LinkedIn. Dit is de échte stem. Schrijf zo.
+
+POST 1 (Mensen achter VDT — beëdiging):
+"Nog maar kort geleden liep Joep hier binnen, en vrijdag stond hij al bij de rechtbank. 🦅
+Want het is officieel: Joep van den Hoogen is beëdigd tot advocaat!
+Vanaf deze week mogen we hem dus écht advocaat noemen en start hij zijn advocaatstage binnen ons kantoor.
+Met zijn enthousiasme, nieuwsgierigheid en drive heeft hij zijn plek binnen VDT snel gevonden. Wij kijken ernaar uit om zijn verdere ontwikkeling van dichtbij mee te maken.
+Gefeliciteerd Joep, let's go! 🚀
+📸 Joep met zijn patroon Jasper de Roo
+#advocaatstagiair #beëdiging #vdtonderneemtmetjemee"
+
+POST 2 (Mensen achter VDT — welkomstpost):
+"Welkom: Eefje van den Berg 🚀
+Met haar energie, gevoel voor structuur en sociale flair voelt Eefje feilloos aan [...]"
+
+POST 3 (Mensen achter VDT — welkomstpost):
+"Welkom: Harold Simonis! 🚀
+Als het spannend wordt, blijft Harold rustig. [...meer]"
+
+POST 4 (Kantoor — muurschildering):
+"De onthulling was natuurlijk live bedoeld tijdens onze nieuwjaarsborrel, maar het weer gooide roet in het eten… en we wilden niemand langer laten wachten.
+Misschien was het sommige al opgevallen: onze vergaderruimte was de afgelopen tijd gesloten. Niet zonder reden 🙈
+De saaie, zwarte wand maakte plaats voor iets dat écht bij ons past: Paul Watty is Nederlands kunstenaar, muralist en grafisch ontwerper en Tilburger. Hij nam de muur onder handen en vertaalde onze mascotte 'advocaten van de toekomst' naar beeld.
+Het resultaat? Een ruimte die inspireert, verrast en gesprekken op gang brengt. Een samenwerking waar we trots op zijn, samen met lokale Tilburgse ondernemers.
+#vdtonderneemtmetjemee"
+
+WAT OPVALT AAN DEZE STIJL:
+- Openingszin is een tijdlijn of een punchline: "Nog maar kort geleden... en vrijdag al bij de rechtbank." / "Als het spannend wordt, blijft Harold rustig."
+- Korte alinea's, max 2 zinnen per alinea
+- Persoonsnamen altijd met voornaam, voelt als een verhaal over iemand die je kent
+- Emoji spaarzaam maar raak: 🚀 voor energie, 🦅 voor mijlpalen, 📸 voor fotocredit
+- Hashtag altijd afgesloten met #vdtonderneemtmetjemee
+- Geen bloemrijke beschrijvingen, geen superlatieven — gewoon wat er is, goed verwoord`
 
 export function buildLinkedInPrompt(formData) {
   const { onderwerp, pijler, doelgroep, toon, gebruik12tje, hashtagsToevoegen, extraContext, websiteLink, zoekWebsiteLink } = formData
@@ -255,70 +290,85 @@ export async function generateContent(apiKey, type, formData) {
 
 
 const VDT_VISUAL_DNA = `
-== VDT ADVOCATEN — VISUAL IDENTITY FOR IMAGE GENERATION ==
+== VDT ADVOCATEN — VISUAL IDENTITY (BASED ON REAL LINKEDIN POSTS & OFFICE) ==
 
-BRAND PALETTE — use these colors prominently, not as tiny accents:
-- VDT Green #2FA766: the dominant brand color — use as background, color block, large surface
-- VDT Teal #007F81: darker companion — shadows, secondary blocks, depth
-- VDT Red #E74049: warm accent — small pop of color, never dominant
-- VDT Yellow #F4C200: energy accent — highlight detail, sticky note, small object
-- Off-white #F7F7F5: clean background tone
-- Warm dark #1A1A1A: deep contrast for shadows or text areas
+NO PEOPLE IN THE IMAGE. Zero people, zero hands, zero silhouettes.
+Make it feel personal through objects, the real VDT office environment, and brand colors.
 
-VISUAL STYLE — graphic editorial, NOT photo-realistic stock:
-- Think: modern Dutch design studio. Clean, bold, confident.
-- Strong color blocks combined with real-world objects or textures
-- Shallow depth of field photography layered with graphic color elements
-- OR: flat-lay object photography on VDT green background
-- Paper texture, concrete, warm wood — combine with brand color overlays
-- NOT: generic white-background stock. NOT: corporate cold blue. NOT: cliché legal imagery.
+BRAND PALETTE:
+- VDT Green #2FA766: dominant brand color — backgrounds, large surfaces, objects
+- VDT Teal #007F81: darker companion — depth, shadow, secondary elements
+- VDT Red #E74049: warm accent — small pop detail only
+- VDT Yellow #F4C200: energy accent — sticky note, highlighter, small object
+- Off-white #F7F7F5 and warm dark #1A1A1A: clean contrast tones
 
-TWO APPROACHES THAT WORK WELL:
-Option A — Color-block object photo: Objects photographed from above (flat lay) on a solid VDT green (#2FA766) background. Objects are warm and personal — a notebook, pen, coffee cup, plant cutting. High contrast, bold.
-Option B — Editorial still life: Objects in natural environment, but with strong VDT green element dominating the frame (a large green folder, green chair, green wall panel behind desk objects). Warm film-like photography style.
+THE REAL VDT OFFICE — use this when showing a workspace:
+The VDT Advocaten office in Tilburg has a distinctive industrial-loft style:
+- Ceiling: exposed pipes and ductwork, rectangular fluorescent strip lights on rails — not hidden, intentionally industrial
+- Floor: dark gray concrete or polished stone
+- Walls: white, clean, occasionally with striking artwork (incl. a large detailed graphite mural of a rocket/spacecraft — their mascot "advocaten van de toekomst")
+- Desks: modern, white, minimal — open plan layout
+- Lounge area: a deep dark-green curved sofa, low coffee table
+- Plants: large tropical statement plants (bird of paradise / strelitzia, or similar tall-leaved plants)
+- Light: a mix of industrial strip lighting + warm spots; modern without being cold
+- Overall feel: creative agency meets Tilburg nuchterheid — not a traditional law office at all
 
-HUMANIZING DETAILS — no people, but personal feel:
-- An open notebook with handwritten notes (illegible but real-looking)
-- A coffee mug with slight steam
-- A blazer draped over a chair (VDT green lining visible)
+VDT GRAPHIC DESIGN STYLE (for graphic-style prompts):
+When creating a designed/branded visual rather than a photo:
+- Background: VDT green gradient (#2FA766 fading lighter top to bottom)
+- Typography: bold, large, modern sans-serif — white or very dark
+- Pill/badge labels: small rounded rectangles in VDT green with white text (e.g. "WELKOM", category labels)
+- Logo placement: "VDT." wordmark top-left (dot included), with "advocaten" below in smaller text
+- Clean, confident, modern Dutch design sensibility
+
+PHOTO STYLE (for realistic photo prompts):
+- Canon/Sony mirrorless look, 35–50mm equivalent
+- Natural and/or warm mixed lighting (window + industrial strip)
+- Slightly warm color grade, real — not Instagram-filtered
+- Shallow depth of field: sharp object foreground, soft background
+- NOT posed, NOT stock — candid object arrangement
+
+HUMANIZING DETAILS (no people, but personal feel):
+- An open notebook with handwritten notes (illegible but natural)
+- A coffee mug, slight steam, on the dark green sofa armrest or white desk
+- A blazer draped over the back of a white office chair
 - Reading glasses on a document
-- A pen diagonal across an open page
-- Post-its with scribbled notes
-- A bookmarked book open on a desk
-- Car keys or phone face-down next to a coffee cup
+- A pen diagonal across a page
 - Business cards scattered after a meeting
+- Post-its on a monitor edge
+- The dark-green VDT sofa with an open book and coffee cup on the low table
 
-FORMAT: Square (1:1), LinkedIn feed — strong single focal point, clean composition, not busy
+FORMAT: Square (1:1), LinkedIn — strong focal point, not busy
 
 ABSOLUTE DON'TS:
-- No people, no hands, no body parts, no silhouettes
-- No scales of justice, gavels, legal clichés
-- No lightbulbs, arrows, puzzle pieces, generic icons
-- No text overlays (logo will be added separately in Canva)
+- No people, no hands, no body parts
+- No scales of justice, gavels, or any legal clichés
+- No lightbulbs, arrows, puzzle pieces
 - No cold blue tones
-- No more than 3–4 objects as focal points
+- No text overlays (VDT logo added separately in Canva)
+- No generic white-background stock photo look
 `
 
 const PILLAR_SCENES = {
   'Praktijkinzichten': {
-    sceneA: 'Flat lay on solid VDT green (#2FA766) background: an open notebook with handwritten notes, a white ceramic mug, a yellow (#F4C200) sticky note with scribbled text, a black pen diagonal. Overhead shot, sharp, clean shadows.',
-    sceneB: 'A wooden desk surface with warm window light: an open legal document with handwritten annotations, reading glasses resting on it, a VDT-green coffee mug in the corner, a small plant blurred softly behind.',
-    mood: 'clarity, expertise made accessible — someone is figuring something out here',
+    sceneA: 'The VDT office lounge area: the deep dark-green curved sofa, an open notebook with handwritten notes on the low table, a white ceramic coffee mug with slight steam, a pen beside it. Industrial strip lights softly lit above. No people. Warm, focused.',
+    sceneB: 'A white minimal VDT desk with dark concrete floor visible below. An open document with handwritten annotations, reading glasses resting on it, a small VDT-green coffee mug to the side. Shallow depth of field, warm office light.',
+    mood: 'someone is working through something important here — expertise made accessible',
   },
   'Praktijkcases': {
-    sceneA: 'Flat lay on VDT teal (#007F81) surface: two documents side by side, one with highlighted passages, a red (#E74049) paperclip, a pen, a small calculator. Clean overhead composition.',
-    sceneB: 'A glass-topped meeting table with warm light: two open documents spread out, a VDT-green folder closed to the side, a coffee cup, reading glasses. Slightly angled shot, shallow depth of field.',
-    mood: 'a case being worked through — real, detailed, in progress',
+    sceneA: 'The VDT office meeting table: two open documents spread out, one with highlighted lines, a red paper clip, a pen across the page. The industrial strip-lit ceiling visible blurred above. Clean, real, in-progress.',
+    sceneB: 'Flat lay overhead shot on VDT teal (#007F81) surface: two contracts side by side, yellow (#F4C200) sticky note with scribbles, a black pen, a small calculator. Sharp, clean overhead composition.',
+    mood: 'a real case being worked through — detailed, focused, collaborative',
   },
   'Netwerk & Events': {
-    sceneA: 'Flat lay on warm dark wood: two empty wine glasses, a small VDT-green notebook, three business cards scattered naturally, a cocktail napkin folded. Warm candlelight-style lighting.',
-    sceneB: 'A café high table after a networking event: wine glasses, VDT-green branded notepad, business cards, warm evening brasserie light blurred in background. Slightly angled, editorial feel.',
+    sceneA: 'A high café/brasserie table after a VDT networking event: two empty wine glasses, a small VDT-green branded notebook, business cards scattered naturally, warm brasserie evening light blurred in background.',
+    sceneB: 'The VDT office lounge: the dark-green sofa with two empty coffee cups on the low table, a few business cards, a closed notebook. The industrial ceiling with strip lights softly visible above. Post-event warmth.',
     mood: 'the warm aftermath of a good conversation — Mosselborrel or Vastgoedborrel vibe',
   },
   'Mensen achter VDT': {
-    sceneA: 'Flat lay on VDT green (#2FA766): a smart blazer folded, a leather notebook, a pen, a small succulent plant, business cards. Personal and warm. Overhead, clean.',
-    sceneB: 'An office chair with a blazer draped over it naturally, VDT-green interior detail visible, a desk lamp casting warm light, a coffee mug on the desk beside it. Nobody present — but feels lived-in.',
-    mood: 'personal, warm — a real person works here, not a corporate placeholder',
+    sceneA: 'A white VDT office chair with a blazer draped naturally over the back. The distinctive VDT office behind it: dark concrete floor, industrial strip lights on the ceiling, large tropical plant blurred in background. A coffee mug on the desk beside it.',
+    sceneB: 'Flat lay on VDT green (#2FA766): a leather notebook, a pen, a small succulent, two business cards. Overhead, clean, bold. Warm and personal.',
+    mood: 'a real person works here — warm, competent, will be right back',
   },
 }
 
