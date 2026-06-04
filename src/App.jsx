@@ -75,10 +75,10 @@ export default function App() {
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             {activeTab === 'linkedin' && (
-              <LinkedInGenerator onGenerate={handleGenerate} loading={loading} apiKey={apiKey} />
+              <LinkedInGenerator onGenerate={handleGenerate} loading={loading} />
             )}
             {activeTab === 'newsletter' && (
-              <NewsletterGenerator onGenerate={handleGenerate} loading={loading} apiKey={apiKey} />
+              <NewsletterGenerator onGenerate={handleGenerate} loading={loading} />
             )}
           </div>
           <div>
