@@ -3,6 +3,7 @@ import Layout from './components/Layout.jsx'
 import TabBar from './components/TabBar.jsx'
 import LinkedInGenerator from './components/LinkedInGenerator.jsx'
 import NewsletterGenerator from './components/NewsletterGenerator.jsx'
+import Planning from './components/Planning.jsx'
 import OutputPanel from './components/OutputPanel.jsx'
 import ApiKeySetup from './components/ApiKeySetup.jsx'
 import { generateContent } from './gemini.js'
@@ -53,24 +54,30 @@ export default function App() {
     <Layout onLogout={handleLogout}>
       <TabBar activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); handleClear() }} />
 
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          {activeTab === 'linkedin' && (
-            <LinkedInGenerator onGenerate={handleGenerate} loading={loading} />
-          )}
-          {activeTab === 'newsletter' && (
-            <NewsletterGenerator onGenerate={handleGenerate} loading={loading} />
-          )}
+      {activeTab === 'planning' ? (
+        <div className="mt-6">
+          <Planning apiKey={apiKey} />
         </div>
-        <div>
-          <OutputPanel
-            output={output}
-            loading={loading}
-            error={error}
-            onClear={handleClear}
-          />
+      ) : (
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            {activeTab === 'linkedin' && (
+              <LinkedInGenerator onGenerate={handleGenerate} loading={loading} />
+            )}
+            {activeTab === 'newsletter' && (
+              <NewsletterGenerator onGenerate={handleGenerate} loading={loading} />
+            )}
+          </div>
+          <div>
+            <OutputPanel
+              output={output}
+              loading={loading}
+              error={error}
+              onClear={handleClear}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </Layout>
   )
 }
