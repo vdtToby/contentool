@@ -254,48 +254,128 @@ export async function generateContent(apiKey, type, formData) {
 
 
 
+const VDT_VISUAL_DNA = `
+== VDT ADVOCATEN — VISUAL IDENTITY GUIDE FOR IMAGE PROMPTS ==
+
+BRAND COLORS (use at least one, never forced or overwhelming):
+- Primary green: #2FA766 — appear in: blazer/jacket lapel, coffee mug, plant, folder, accent wall stripe, pen, lanyard, door frame
+- Teal: #007F81 — darker accent, backgrounds, chair fabric
+- Warm white and light gray: dominant background tones
+- Natural wood: desks, tables, floors — warm and grounded
+- NEVER: cold blue corporate tones, harsh fluorescent lighting
+
+PHOTOGRAPHY STYLE:
+- Editorial-candid hybrid: looks real but well-composed
+- Shot with a mirrorless camera, 35mm or 50mm lens equivalent
+- Warm white balance (not cool/clinical)
+- Shallow depth of field (f/2 to f/4) — sharp subject, slightly blurred background
+- Natural window light as key light, no harsh flash, no studio softbox look
+- Slightly warm, film-like color grade — think Fujifilm simulation
+- NOT a stock photo. NOT posed. NOT symmetrical corporate composure.
+
+PEOPLE:
+- Age: 30–55 years old, Dutch/European appearance
+- Dress code: smart casual — blazer without tie, open collar shirt, quality knitwear
+- NO suits with ties. NO power poses. NO fake smiles to camera.
+- Body language: leaning in, gesturing while talking, looking at documents together, laughing mid-conversation
+- Diverse but realistic for a Tilburg professional context
+
+SETTINGS:
+- Modern open office with plants, exposed concrete or brick, wooden desks
+- Glass-walled meeting rooms — visible but not sterile
+- Café or brasserie setting for networking scenes — warm lighting, high tables
+- Tilburg street or Hart van Brabantlaan exterior — subtle, not tourist-y
+- Outdoor terrace of a Tilburg venue, evening golden hour
+
+MOOD:
+- Professional but human. Warm but sharp. Tilburg: nuchter met pit.
+- The feeling: "these are people I'd want to grab a coffee with who also know their stuff"
+- NOT: cold, hierarchical, authoritative, distant, corporate-generic
+
+FORMAT: Square (1:1), optimized for LinkedIn feed — strong focal point, not too busy
+
+ABSOLUTE DON'TS:
+- No scales of justice, gavels, or legal clichés
+- No stock-photo handshakes with teeth-showing fake smiles
+- No lightbulbs, arrows, puzzle pieces
+- No text overlays or logos
+- No overly symmetrical "hero" compositions
+- No all-white backgrounds
+- No more than 4 people in frame
+`
+
+const PILLAR_SCENES = {
+  'Praktijkinzichten': {
+    scene: 'One lawyer leaning slightly forward across a small meeting table, one hand gesturing expressively, explaining something to a single client who nods — notepad and coffee cup on the table. Intimate, focused, warm.',
+    mood: 'moment of clarity and trust — the expert making something complex feel simple',
+  },
+  'Praktijkcases': {
+    scene: 'Two professionals side by side at a desk, both looking at the same document or laptop screen, one pointing at a specific line — collaborative, problem-solving energy. Papers spread out naturally.',
+    mood: 'working through a real challenge together — partnership in action',
+  },
+  'Netwerk & Events': {
+    scene: 'A group of 3–4 professionals at a standing high table in a warm brasserie or venue, holding drinks, mid-conversation and laughing. Evening warm light. One person with a VDT-green detail on their blazer or lanyard.',
+    mood: 'genuine connection at a Tilburg networking event — the Mosselborrel or Vastgoedborrel vibe',
+  },
+  'Mensen achter VDT': {
+    scene: 'A single VDT team member photographed candidly in their natural work environment — looking slightly off-camera, mid-action (writing, picking up a phone, walking through office). Not a headshot. Real moment.',
+    mood: 'human, approachable, you\'d trust this person — warm and competent',
+  },
+}
+
 export async function generateVisualPrompt(apiKey, type, formData) {
   const { onderwerp, pijler, doelgroep } = formData
 
-  const pijlerContext = {
-    'Praktijkinzichten': 'een advocaat die inzichten deelt in een informeel gesprek, whiteboard of notitieboek zichtbaar',
-    'Praktijkcases': 'twee mensen die samen een probleem doorwerken aan een bureau, papieren uitgespreid, gefocust',
-    'Netwerk & Events': 'een levendig netwerkevenement in Tilburg, mensen mingelen met drankjes, warme sfeer, avondlicht',
-    'Mensen achter VDT': 'een VDT-teamlid in hun natuurlijke werkomgeving, candid, benaderbaar, Tilburgs kantoorgevoel',
-  }[pijler] || 'een professionele maar benaderbare kantooromgeving in Tilburg'
+  const pillarData = PILLAR_SCENES[pijler] || {
+    scene: 'Two professionals in a modern Tilburg office, engaged in focused conversation over documents and coffee.',
+    mood: 'professional yet human, warm and approachable',
+  }
 
-  const prompt = `Je maakt een beeldprompt voor een LinkedIn-visual van VDT Advocaten (advocatenkantoor, Tilburg, opgericht 1994).
+  const doelgroepDetail = {
+    'Ondernemers': 'The non-lawyer in the scene looks like an entrepreneur — energetic, practical, business casual, maybe a bit informal.',
+    'Accountants': 'The setting has a slightly more structured/financial feel — papers, numbers visible in background.',
+    'Vastgoedprofessionals': 'Background hints at real estate context — building blueprints, a scale model, or a modern building exterior visible.',
+    'HR-professionals': 'Setting suggests a people/organizational context — open office floor visible, or HR-related documents.',
+    'Financieel professionals': 'Atmosphere is sharp and precise — clean desk, financial documents, subtle financial data on a screen in background.',
+  }[doelgroep] || ''
 
-STAP 1 — ONDERZOEK (gebruik Google Search):
-Zoek en analyseer het volgende:
-1. Bekijk www.vdt-advocaten.nl: noteer de exacte kleurstellingen, het gebruik van iconen, de fotostijl op de website, de algehele sfeer en uitstraling.
-2. Bekijk recente LinkedIn-posts (afgelopen jaar) van het bedrijfsprofiel: https://www.linkedin.com/company/vdt-advocaten/posts/ — analyseer welke visuals ze gebruiken, kleurgebruik, stijl van foto's of illustraties.
-3. Bekijk recente LinkedIn-posts (afgelopen jaar) van medewerkers van VDT Advocaten via: https://www.linkedin.com/search/results/people/?origin=COMPANY_PAGE_CANNED_SEARCH&currentCompany=%5B%222927350%22%5D — kijk naar de stijl van de visuals die individuele medewerkers gebruiken.
+  const prompt = `You are an expert creative director writing image generation prompts for a Dutch law firm's LinkedIn visuals.
 
-STAP 2 — GENEREER BEELDPROMPT:
-Op basis van wat je gevonden hebt over de echte VDT-uitstraling, schrijf één Engelse beeldprompt (max 130 woorden) voor gebruik in Canva AI, Adobe Firefly of DALL-E.
+BRAND IDENTITY:
+${VDT_VISUAL_DNA}
 
-De prompt moet aansluiten bij:
-- De werkelijke kleurstellingen en visuele stijl van VDT zoals gevonden op hun website en LinkedIn
-- Het onderwerp van de post: ${onderwerp}
-- Contentpijler: ${pijler} — scène: ${pijlerContext}
-- Doelgroep: ${doelgroep}
+YOUR TASK:
+Write ONE precise English image prompt (100–140 words) for a LinkedIn post about:
+Topic: "${onderwerp}"
+Content pillar: ${pijler}
 
-Stijleisen die altijd gelden:
-- Candid fotografiestijl, natuurlijk licht, geen geposeerde stockfoto-uitstraling
-- Vierkant formaat (1:1), geschikt voor LinkedIn
-- Geen tekstoverlays, geen logo's
-- Warm en echt, passend bij een Tilburgs advocatenkantoor dat naast de ondernemer staat
+Base scene to work from:
+${pillarData.scene}
 
-Geef ALLEEN de Engelse beeldprompt terug, geen uitleg, geen toelichting.`
+Mood to capture:
+${pillarData.mood}
+
+Audience detail:
+${doelgroepDetail}
+
+PROMPT WRITING RULES:
+1. Start with the photography style descriptor
+2. Describe the scene specifically (who, what, where, what are they doing)
+3. Include one VDT brand color detail naturally (green mug, teal folder, etc.)
+4. Specify lighting and lens feel
+5. End with technical format note
+6. Include a short negative clause: "Not a stock photo, no posed smiles, no text overlays"
+
+Adapt the base scene creatively to the specific topic "${onderwerp}" if it makes the image more relevant.
+
+Return ONLY the English image prompt. No preamble, no explanation.`
 
   const body = {
     contents: [{ parts: [{ text: prompt }] }],
-    tools: [{ google_search: {} }],
   }
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
