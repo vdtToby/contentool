@@ -264,31 +264,38 @@ export async function generateVisualPrompt(apiKey, type, formData) {
     'Mensen achter VDT': 'een VDT-teamlid in hun natuurlijke werkomgeving, candid, benaderbaar, Tilburgs kantoorgevoel',
   }[pijler] || 'een professionele maar benaderbare kantooromgeving in Tilburg'
 
-  const prompt = `Je genereert een beeldprompt voor een LinkedIn-visual van VDT Advocaten (advocatenkantoor, Tilburg).
+  const prompt = `Je maakt een beeldprompt voor een LinkedIn-visual van VDT Advocaten (advocatenkantoor, Tilburg, opgericht 1994).
 
-Onderwerp van de post: ${onderwerp}
-Contentpijler: ${pijler}
-Doelgroep: ${doelgroep}
-Scènerichting: ${pijlerContext}
+STAP 1 — ONDERZOEK (gebruik Google Search):
+Zoek en analyseer het volgende:
+1. Bekijk www.vdt-advocaten.nl: noteer de exacte kleurstellingen, het gebruik van iconen, de fotostijl op de website, de algehele sfeer en uitstraling.
+2. Bekijk recente LinkedIn-posts (afgelopen jaar) van het bedrijfsprofiel: https://www.linkedin.com/company/vdt-advocaten/posts/ — analyseer welke visuals ze gebruiken, kleurgebruik, stijl van foto's of illustraties.
+3. Bekijk recente LinkedIn-posts (afgelopen jaar) van medewerkers van VDT Advocaten via: https://www.linkedin.com/search/results/people/?origin=COMPANY_PAGE_CANNED_SEARCH&currentCompany=%5B%222927350%22%5D — kijk naar de stijl van de visuals die individuele medewerkers gebruiken.
 
-Schrijf één Engelse beeldprompt (max 120 woorden) voor gebruik in Canva AI, Adobe Firefly of DALL-E.
+STAP 2 — GENEREER BEELDPROMPT:
+Op basis van wat je gevonden hebt over de echte VDT-uitstraling, schrijf één Engelse beeldprompt (max 130 woorden) voor gebruik in Canva AI, Adobe Firefly of DALL-E.
 
-Stijleisen voor de prompt:
-- Candid fotografiestijl, shot op telefoon of spiegelloze camera met natuurlijk licht
-- GEEN stockfoto's, GEEN studioshots, GEEN geposeerde beelden
-- Warm, echt, licht imperfect — alsof iemand er gewoon bij stond
-- VDT groen (#2FA766) mag subtiel aanwezig zijn in kleding of decor, nooit opzichtig
-- GEEN tekstoverlays, GEEN logo's, GEEN clichématige zakelijke beelden (geen neppe handdrukken in pakken, geen gloeilampen, geen weegschalen)
+De prompt moet aansluiten bij:
+- De werkelijke kleurstellingen en visuele stijl van VDT zoals gevonden op hun website en LinkedIn
+- Het onderwerp van de post: ${onderwerp}
+- Contentpijler: ${pijler} — scène: ${pijlerContext}
+- Doelgroep: ${doelgroep}
+
+Stijleisen die altijd gelden:
+- Candid fotografiestijl, natuurlijk licht, geen geposeerde stockfoto-uitstraling
 - Vierkant formaat (1:1), geschikt voor LinkedIn
+- Geen tekstoverlays, geen logo's
+- Warm en echt, passend bij een Tilburgs advocatenkantoor dat naast de ondernemer staat
 
-Geef ALLEEN de beeldprompt terug, geen uitleg of inleiding.`
+Geef ALLEEN de Engelse beeldprompt terug, geen uitleg, geen toelichting.`
 
   const body = {
     contents: [{ parts: [{ text: prompt }] }],
+    tools: [{ google_search: {} }],
   }
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
