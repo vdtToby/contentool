@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#2FA766" />
+  <title>To-do</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f3f4f6;
+      color: #1f2937;
+      min-height: 100dvh;
+    }
+
+    header {
+      background: #2FA766;
+      color: white;
+      padding: 16px 20px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; }
+    header button {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+
+    /* Setup screen */
+    #setup {
+      max-width: 480px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    #setup h2 { font-size: 1.1rem; margin-bottom: 8px; }
+    #setup p { font-size: 0.85rem; color: #6b7280; margin-bottom: 20px; line-height: 1.5; }
+    #setup label { display: block; font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: 4px; margin-top: 14px; }
+    #setup small { display: block; font-size: 0.75rem; color: #9ca3af; margin-top: 2px; }
+    #setup input {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    #setup input:focus { border-color: #2FA766; box-shadow: 0 0 0 3px rgba(47,167,102,0.15); }
+    #setup .save-btn {
+      margin-top: 22px;
+      width: 100%;
+      background: #2FA766;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Input card */
+    .input-card {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .input-row input {
+      flex: 1;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .input-row input:focus { border-color: #2FA766; box-shadow: 0 0 0 3px rgba(47,167,102,0.15); }
+    .add-btn {
+      background: #2FA766;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      width: 42px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .options-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    .prio-btn {
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      border-radius: 99px;
+      border: 1px solid #e5e7eb;
+      background: white;
+      cursor: pointer;
+      color: #9ca3af;
+      transition: all 0.15s;
+    }
+    .prio-btn.active-high   { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; font-weight: 600; }
+    .prio-btn.active-normal { background: #f3f4f6; color: #4b5563; border-color: #d1d5db; font-weight: 600; }
+    .prio-btn.active-low    { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; font-weight: 600; }
+
+    .label-input {
+      flex: 1;
+      min-width: 120px;
+      border: 1px solid #e5e7eb;
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      outline: none;
+    }
+    .label-input:focus { border-color: #2FA766; }
+
+    .action-row { display: flex; gap: 16px; }
+    .action-btn {
+      background: none;
+      border: none;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 0;
+      transition: color 0.15s;
+    }
+    .action-btn:hover { color: #2FA766; }
+    .action-btn.recording { color: #ef4444; animation: pulse 1s infinite; }
+    .action-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .error-msg {
+      margin-top: 8px;
+      font-size: 0.78rem;
+      color: #ef4444;
+      background: #fef2f2;
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    /* Filters */
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .filter-btn {
+      font-size: 0.78rem;
+      padding: 5px 14px;
+      border-radius: 99px;
+      border: 1px solid #e5e7eb;
+      background: white;
+      cursor: pointer;
+      color: #6b7280;
+      transition: all 0.15s;
+    }
+    .filter-btn.active { background: #2FA766; color: white; border-color: #2FA766; }
+    .filter-count { opacity: 0.7; margin-left: 4px; }
+
+    /* Todo items */
+    .todo-item {
+      background: white;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      border: 1px solid #f3f4f6;
+      transition: opacity 0.2s;
+    }
+    .todo-item.done { opacity: 0.45; }
+
+    .check-btn {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #d1d5db;
+      background: white;
+      cursor: pointer;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .check-btn.checked { background: #2FA766; border-color: #2FA766; }
+    .check-btn svg { width: 12px; height: 12px; color: white; display: none; }
+    .check-btn.checked svg { display: block; }
+
+    .todo-body { flex: 1; min-width: 0; }
+    .todo-text {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .todo-item.done .todo-text { text-decoration: line-through; color: #9ca3af; }
+
+    .todo-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; align-items: center; }
+    .badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 99px;
+      border: 1px solid transparent;
+    }
+    .badge-high   { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+    .badge-low    { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+    .age-badge    { font-size: 0.7rem; color: #d1d5db; }
+
+    .del-btn {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      color: #e5e7eb;
+      cursor: pointer;
+      padding: 2px;
+      line-height: 1;
+      font-size: 1rem;
+      transition: color 0.15s;
+    }
+    .del-btn:hover { color: #ef4444; }
+
+    .empty { text-align: center; color: #d1d5db; font-size: 0.9rem; padding: 48px 0; }
+
+    .sync-status {
+      font-size: 0.7rem;
+      color: #d1d5db;
+      text-align: center;
+      padding: 8px 0 4px;
+    }
+
+    /* Label colors */
+    .lc0 { background: #ede9fe; color: #6d28d9; }
+    .lc1 { background: #ccfbf1; color: #0f766e; }
+    .lc2 { background: #fef9c3; color: #854d0e; }
+    .lc3 { background: #fce7f3; color: #9d174d; }
+    .lc4 { background: #e0e7ff; color: #3730a3; }
+  </style>
+</head>
+<body>
+
+<div id="setup" style="display:none">
+  <h2>Instellen</h2>
+  <p>Vul je sleutels in om de app te gebruiken. Ze worden opgeslagen in je browser en worden nooit doorgestuurd.</p>
+
+  <label>JSONBin Bin ID <small>Maak een gratis account op jsonbin.io → New Bin → kopieer de ID uit de URL</small></label>
+  <input id="cfg-bin" type="text" placeholder="xxxxxxxxxxxxxxxxxxxxxxxx" />
+
+  <label>JSONBin API Key <small>jsonbin.io → API Keys → kopieer je Master Key</small></label>
+  <input id="cfg-jsonkey" type="password" placeholder="$2b$10$..." />
+
+  <label>OpenAI API Key <small>Optioneel — voor spraak via Whisper (platform.openai.com)</small></label>
+  <input id="cfg-openai" type="password" placeholder="sk-..." />
+
+  <label>Anthropic API Key <small>Optioneel — voor screenshot OCR (console.anthropic.com)</small></label>
+  <input id="cfg-anthropic" type="password" placeholder="sk-ant-..." />
+
+  <button class="save-btn" onclick="saveConfig()">Opslaan & starten</button>
+</div>
+
+<div id="app" style="display:none">
+  <header>
+    <h1>To-do</h1>
+    <button onclick="openSetup()">⚙ Instellingen</button>
+  </header>
+
+  <div class="container">
+    <!-- Input -->
+    <div class="input-card">
+      <div class="input-row">
+        <input id="task-input" type="text" placeholder="Nieuwe taak..." onkeydown="if(event.key==='Enter') addTodo()" />
+        <button class="add-btn" onclick="addTodo()">+</button>
+      </div>
+      <div class="options-row">
+        <button class="prio-btn active-normal" data-p="high"   onclick="setPriority('high')">Hoog</button>
+        <button class="prio-btn" data-p="normal" onclick="setPriority('normal')">Normaal</button>
+        <button class="prio-btn" data-p="low"    onclick="setPriority('low')">Laag</button>
+        <input class="label-input" id="label-input" type="text" placeholder="#label, #label" />
+      </div>
+      <div class="action-row">
+        <button class="action-btn" onclick="triggerScreenshot()" id="ocr-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Screenshot
+        </button>
+        <input id="file-input" type="file" accept="image/*" style="display:none" onchange="handleScreenshot(event)" />
+        <button class="action-btn" id="mic-btn" onclick="toggleRecording()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+          Spreek in
+        </button>
+      </div>
+      <div id="error-msg" class="error-msg" style="display:none"></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters" id="filters">
+      <button class="filter-btn active" data-f="open" onclick="setFilter('open')">Open <span class="filter-count" id="open-count"></span></button>
+      <button class="filter-btn" data-f="done" onclick="setFilter('done')">Gedaan</button>
+      <button class="filter-btn" data-f="all"  onclick="setFilter('all')">Alles</button>
+    </div>
+
+    <!-- List -->
+    <div id="todo-list"></div>
+    <div class="sync-status" id="sync-status"></div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────
+let todos = []
+let filter = 'open'
+let activeLabel = null
+let priority = 'normal'
+let recording = false
+let mediaRecorder = null
+let audioChunks = []
+
+// ── Config ─────────────────────────────────────────────────
+function cfg(k) { return localStorage.getItem('todo_' + k) || '' }
+
+function saveConfig() {
+  ['bin','jsonkey','openai','anthropic'].forEach(k => {
+    const v = document.getElementById('cfg-' + k).value.trim()
+    if (v) localStorage.setItem('todo_' + k, v)
+  })
+  document.getElementById('setup').style.display = 'none'
+  document.getElementById('app').style.display = 'block'
+  loadTodos()
+}
+
+function openSetup() {
+  document.getElementById('cfg-bin').value = cfg('bin')
+  document.getElementById('cfg-jsonkey').value = cfg('jsonkey')
+  document.getElementById('cfg-openai').value = cfg('openai')
+  document.getElementById('cfg-anthropic').value = cfg('anthropic')
+  document.getElementById('app').style.display = 'none'
+  document.getElementById('setup').style.display = 'block'
+}
+
+// ── JSONBin sync ───────────────────────────────────────────
+async function loadTodos() {
+  setSyncStatus('laden...')
+  try {
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${cfg('bin')}/latest`, {
+      headers: { 'X-Master-Key': cfg('jsonkey') }
+    })
+    if (!r.ok) throw new Error(`JSONBin: ${r.status}`)
+    const data = await r.json()
+    todos = Array.isArray(data.record) ? data.record : []
+    setSyncStatus('')
+  } catch (e) {
+    setSyncStatus('⚠ Kan niet laden: ' + e.message)
+    todos = JSON.parse(localStorage.getItem('todo_local') || '[]')
+  }
+  render()
+}
+
+async function saveTodos() {
+  localStorage.setItem('todo_local', JSON.stringify(todos))
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${cfg('bin')}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': cfg('jsonkey') },
+      body: JSON.stringify(todos)
+    })
+    setSyncStatus('')
+  } catch (e) {
+    setSyncStatus('⚠ Opslaan mislukt (lokaal opgeslagen)')
+  }
+}
+
+function setSyncStatus(msg) {
+  document.getElementById('sync-status').textContent = msg
+}
+
+// ── Todos ──────────────────────────────────────────────────
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6) }
+
+async function addTodo(text) {
+  const input = document.getElementById('task-input')
+  const t = (text || input.value).trim()
+  if (!t) return
+  const labels = document.getElementById('label-input').value
+    .split(',').map(l => l.trim().replace(/^#/,'')).filter(Boolean)
+  todos.unshift({ id: genId(), text: t, done: false, priority, labels, createdAt: new Date().toISOString(), completedAt: null })
+  input.value = ''
+  document.getElementById('label-input').value = ''
+  render()
+  await saveTodos()
+}
+
+async function toggleDone(id) {
+  const t = todos.find(t => t.id === id)
+  if (!t) return
+  t.done = !t.done
+  t.completedAt = t.done ? new Date().toISOString() : null
+  render()
+  await saveTodos()
+}
+
+async function deleteTodo(id) {
+  todos = todos.filter(t => t.id !== id)
+  render()
+  await saveTodos()
+}
+
+// ── Priority ───────────────────────────────────────────────
+function setPriority(p) {
+  priority = p
+  document.querySelectorAll('.prio-btn').forEach(b => {
+    b.className = 'prio-btn' + (b.dataset.p === p ? ' active-' + p : '')
+  })
+}
+
+// ── Filter ─────────────────────────────────────────────────
+function setFilter(f) {
+  filter = f
+  document.querySelectorAll('.filter-btn[data-f]').forEach(b => {
+    b.classList.toggle('active', b.dataset.f === f)
+  })
+  render()
+}
+
+function setLabelFilter(l) {
+  activeLabel = activeLabel === l ? null : l
+  render()
+}
+
+// ── Render ─────────────────────────────────────────────────
+function timeAgo(iso) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return 'zojuist'
+  if (m < 60) return m + ' min'
+  const h = Math.floor(m / 60)
+  if (h < 24) return h + 'u'
+  const d = Math.floor(h / 24)
+  if (d < 7) return d + 'd'
+  return Math.floor(d/7) + 'w'
+}
+
+function labelColor(l) {
+  let h = 0; for (const c of l) h = (h*31 + c.charCodeAt(0)) & 0xffff
+  return 'lc' + (h % 5)
+}
+
+function render() {
+  const open = todos.filter(t => !t.done)
+  document.getElementById('open-count').textContent = open.length || ''
+
+  // Rebuild label filters
+  const allLabels = [...new Set(todos.flatMap(t => t.labels))]
+  const filtersEl = document.getElementById('filters')
+  // remove old label buttons
+  filtersEl.querySelectorAll('[data-l]').forEach(b => b.remove())
+  allLabels.forEach(l => {
+    const b = document.createElement('button')
+    b.className = 'filter-btn badge ' + labelColor(l) + (activeLabel === l ? ' active' : '')
+    b.dataset.l = l
+    b.textContent = '#' + l
+    b.onclick = () => setLabelFilter(l)
+    filtersEl.appendChild(b)
+  })
+
+  const prioOrder = { high: 0, normal: 1, low: 2 }
+  const visible = todos
+    .filter(t => {
+      if (filter === 'open' && t.done) return false
+      if (filter === 'done' && !t.done) return false
+      if (activeLabel && !t.labels.includes(activeLabel)) return false
+      return true
+    })
+    .sort((a, b) => !a.done && !b.done ? prioOrder[a.priority] - prioOrder[b.priority] : 0)
+
+  const list = document.getElementById('todo-list')
+  if (visible.length === 0) {
+    list.innerHTML = '<div class="empty">Geen taken</div>'
+    return
+  }
+
+  list.innerHTML = visible.map(t => `
+    <div class="todo-item ${t.done ? 'done' : ''}">
+      <button class="check-btn ${t.done ? 'checked' : ''}" onclick="toggleDone('${t.id}')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+      </button>
+      <div class="todo-body">
+        <div class="todo-text">${escHtml(t.text)}</div>
+        <div class="todo-meta">
+          ${t.priority === 'high' ? '<span class="badge badge-high">Hoog</span>' : ''}
+          ${t.priority === 'low'  ? '<span class="badge badge-low">Laag</span>'  : ''}
+          ${t.labels.map(l => `<span class="badge ${labelColor(l)}">#${escHtml(l)}</span>`).join('')}
+          <span class="age-badge">open ${timeAgo(t.createdAt)}</span>
+        </div>
+      </div>
+      <button class="del-btn" onclick="deleteTodo('${t.id}')">✕</button>
+    </div>
+  `).join('')
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+// ── Screenshot OCR ─────────────────────────────────────────
+function triggerScreenshot() { document.getElementById('file-input').click() }
+
+async function handleScreenshot(e) {
+  const file = e.target.files?.[0]; if (!file) return
+  const btn = document.getElementById('ocr-btn')
+  btn.textContent = '⏳ Bezig...'
+  hideError()
+  try {
+    const base64 = await fileToBase64(file)
+    const key = cfg('anthropic')
+    if (!key) throw new Error('Geen Anthropic API key ingesteld (⚙ Instellingen)')
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: file.type, data: base64 } },
+          { type: 'text', text: 'Extraheer de tekst uit deze screenshot. Geef alleen de kerninhoud terug als beknopte taakformulering, geen uitleg.' }
+        ]}]
+      })
+    })
+    if (!r.ok) { const err = await r.json(); throw new Error(err.error?.message || r.status) }
+    const data = await r.json()
+    document.getElementById('task-input').value = data.content[0].text
+    document.getElementById('task-input').focus()
+  } catch (e) { showError('OCR mislukt: ' + e.message) }
+  btn.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:15px;height:15px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Screenshot`
+  e.target.value = ''
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader()
+    r.onload = () => res(r.result.split(',')[1])
+    r.onerror = rej
+    r.readAsDataURL(file)
+  })
+}
+
+// ── Whisper ────────────────────────────────────────────────
+async function toggleRecording() {
+  if (!recording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      audioChunks = []
+      mediaRecorder = new MediaRecorder(stream)
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data)
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        await transcribe(new Blob(audioChunks, { type: 'audio/webm' }))
+      }
+      mediaRecorder.start()
+      recording = true
+      const btn = document.getElementById('mic-btn')
+      btn.classList.add('recording')
+      btn.lastChild.textContent = ' Stop opname'
+    } catch (e) { showError('Geen microfoon toegang') }
+  } else {
+    mediaRecorder?.stop()
+    recording = false
+    const btn = document.getElementById('mic-btn')
+    btn.classList.remove('recording')
+    btn.lastChild.textContent = ' Spreek in'
+  }
+}
+
+async function transcribe(blob) {
+  const btn = document.getElementById('mic-btn')
+  btn.lastChild.textContent = ' ⏳ Bezig...'
+  hideError()
+  try {
+    const key = cfg('openai')
+    if (!key) throw new Error('Geen OpenAI API key ingesteld (⚙ Instellingen)')
+    const fd = new FormData()
+    fd.append('file', blob, 'audio.webm')
+    fd.append('model', 'whisper-1')
+    fd.append('language', 'nl')
+    const r = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + key },
+      body: fd
+    })
+    if (!r.ok) { const err = await r.json(); throw new Error(err.error?.message || r.status) }
+    const data = await r.json()
+    document.getElementById('task-input').value = data.text
+    document.getElementById('task-input').focus()
+  } catch (e) { showError('Whisper mislukt: ' + e.message) }
+  btn.lastChild.textContent = ' Spreek in'
+}
+
+// ── Helpers ─────────────────────────────────────────────────
+function showError(msg) {
+  const el = document.getElementById('error-msg')
+  el.textContent = msg
+  el.style.display = 'block'
+}
+function hideError() { document.getElementById('error-msg').style.display = 'none' }
+
+// ── Boot ───────────────────────────────────────────────────
+if (cfg('bin') && cfg('jsonkey')) {
+  document.getElementById('app').style.display = 'block'
+  loadTodos()
+} else {
+  document.getElementById('setup').style.display = 'block'
+}
+</script>
+</body>
+</html>
