@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import HomeScreen from './components/HomeScreen.jsx'
 import Layout from './components/Layout.jsx'
 import TabBar from './components/TabBar.jsx'
 import LinkedInGenerator from './components/LinkedInGenerator.jsx'
@@ -10,6 +11,7 @@ import StreamPick from './components/StreamPick.jsx'
 import { generateContent, generateVisualPrompt } from './gemini.js'
 
 export default function App() {
+  const [section, setSection] = useState(null) // null = home | 'vdt' | 'prive'
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('vdt_gemini_key') || '')
   const [activeTab, setActiveTab] = useState('streampick')
   const [output, setOutput] = useState(null)
@@ -30,29 +32,6 @@ export default function App() {
     setError(null)
   }
 
-  async function handleGenerate(type, formData) {
-    setLoading(true)
-    setError(null)
-    setOutput(null)
-    setVisual(null)
-    setVisualError(null)
-
-    try {
-      const content = await generateContent(apiKey, type, formData)
-      setOutput({ type, content })
-      // Generate image prompt in parallel (non-blocking)
-      setVisualLoading(true)
-      generateVisualPrompt(apiKey, type, formData)
-        .then(v => setVisual(v))
-        .catch(err => setVisualError(err.message))
-        .finally(() => setVisualLoading(false))
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   function handleClear() {
     setOutput(null)
     setError(null)
@@ -65,19 +44,49 @@ export default function App() {
     handleClear()
   }
 
-  // StreamPick doesn't need a Gemini API key
-  if (activeTab === 'streampick') {
+  function goHome() {
+    setSection(null)
+  }
+
+  async function handleGenerate(type, formData) {
+    setLoading(true)
+    setError(null)
+    setOutput(null)
+    setVisual(null)
+    setVisualError(null)
+    try {
+      const content = await generateContent(apiKey, type, formData)
+      setOutput({ type, content })
+      setVisualLoading(true)
+      generateVisualPrompt(apiKey, type, formData)
+        .then((v) => setVisual(v))
+        .catch((err) => setVisualError(err.message))
+        .finally(() => setVisualLoading(false))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ── Home ────────────────────────────────────────────────────────────────────
+  if (!section) {
+    return <HomeScreen onSelect={setSection} />
+  }
+
+  // ── Toby Privé ──────────────────────────────────────────────────────────────
+  if (section === 'prive') {
     return (
-      <Layout onLogout={apiKey ? handleLogout : null} dark>
-        <TabBar activeTab={activeTab} onTabChange={handleTabChange} dark />
+      <Layout onLogout={null} onHome={goHome} sectionLabel="Toby Privé" dark>
         <StreamPick />
       </Layout>
     )
   }
 
+  // ── VDT ─────────────────────────────────────────────────────────────────────
   if (!apiKey) {
     return (
-      <Layout onLogout={null}>
+      <Layout onLogout={null} onHome={goHome} sectionLabel="VDT">
         <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
         <div className="mt-6">
           <ApiKeySetup onSave={handleKeyChange} />
@@ -87,7 +96,7 @@ export default function App() {
   }
 
   return (
-    <Layout onLogout={handleLogout}>
+    <Layout onLogout={handleLogout} onHome={goHome} sectionLabel="VDT">
       <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {activeTab === 'planning' ? (

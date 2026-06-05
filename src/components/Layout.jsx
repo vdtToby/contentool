@@ -1,30 +1,53 @@
 import React from 'react'
 
-export default function Layout({ children, onLogout, dark = false }) {
+export default function Layout({ children, onLogout, onHome, sectionLabel, dark = false }) {
   return (
     <div className={`min-h-screen ${dark ? 'bg-gray-950' : 'bg-gray-50'}`}>
       <header className={`border-b shadow-sm ${dark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
+
+          {/* Back to home */}
+          {onHome && (
+            <button
+              onClick={onHome}
+              className={`text-xs font-medium flex items-center gap-1 transition-colors shrink-0 ${
+                dark ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-700'
+              }`}
+              title="Terug naar startscherm"
+            >
+              ← Terug
+            </button>
+          )}
+
+          {/* Brand */}
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
-              style={{ backgroundColor: '#2FA766' }}
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shrink-0"
+              style={{ backgroundColor: sectionLabel === 'VDT' ? '#2FA766' : '#7c3aed' }}
             >
-              V
+              {sectionLabel === 'VDT' ? 'V' : 'T'}
             </div>
             <div>
-              <h1 className={`text-xl font-bold leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>VDT Contenttool</h1>
-              <p className={`text-xs italic ${dark ? 'text-gray-400' : 'text-gray-500'}`}>Onderneemt met je mee.</p>
+              <h1 className={`text-xl font-bold leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
+                {sectionLabel === 'VDT' ? 'VDT Contenttool' : 'Toby Privé'}
+              </h1>
+              <p className={`text-xs italic ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+                {sectionLabel === 'VDT' ? 'Onderneemt met je mee.' : 'Persoonlijke omgeving'}
+              </p>
             </div>
           </div>
+
+          {/* Right side */}
           <div className="ml-auto flex items-center gap-3">
-            <span className="text-xs font-semibold px-3 py-1 rounded-full text-white hidden sm:inline-block" style={{ backgroundColor: '#2FA766' }}>
-              B.O.E.F.J.E.
-            </span>
+            {sectionLabel === 'VDT' && (
+              <span className="text-xs font-semibold px-3 py-1 rounded-full text-white hidden sm:inline-block" style={{ backgroundColor: '#2FA766' }}>
+                B.O.E.F.J.E.
+              </span>
+            )}
             {onLogout && (
               <button
                 onClick={onLogout}
-                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                className={`text-xs transition-colors ${dark ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
                 title="API-sleutel wijzigen"
               >
                 Sleutel wijzigen
@@ -40,7 +63,9 @@ export default function Layout({ children, onLogout, dark = false }) {
 
       <footer className={`border-t mt-12 ${dark ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-xs text-gray-400">
-          VDT Advocaten · Hart van Brabantlaan 500, 5038 JA Tilburg · 013-544-0400 · lovetilburg@vdt-advocaten.nl
+          {sectionLabel === 'VDT'
+            ? 'VDT Advocaten · Hart van Brabantlaan 500, 5038 JA Tilburg · 013-544-0400 · lovetilburg@vdt-advocaten.nl'
+            : 'Toby Privé · Persoonlijke omgeving'}
         </div>
       </footer>
     </div>
