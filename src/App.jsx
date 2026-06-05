@@ -6,11 +6,12 @@ import NewsletterGenerator from './components/NewsletterGenerator.jsx'
 import Planning from './components/Planning.jsx'
 import OutputPanel from './components/OutputPanel.jsx'
 import ApiKeySetup from './components/ApiKeySetup.jsx'
+import StreamPick from './components/StreamPick.jsx'
 import { generateContent, generateVisualPrompt } from './gemini.js'
 
 export default function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('vdt_gemini_key') || '')
-  const [activeTab, setActiveTab] = useState('linkedin')
+  const [activeTab, setActiveTab] = useState('streampick')
   const [output, setOutput] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -59,13 +60,35 @@ export default function App() {
     setVisualError(null)
   }
 
+  function handleTabChange(tab) {
+    setActiveTab(tab)
+    handleClear()
+  }
+
+  // StreamPick doesn't need a Gemini API key
+  if (activeTab === 'streampick') {
+    return (
+      <Layout onLogout={apiKey ? handleLogout : null} dark>
+        <TabBar activeTab={activeTab} onTabChange={handleTabChange} dark />
+        <StreamPick />
+      </Layout>
+    )
+  }
+
   if (!apiKey) {
-    return <ApiKeySetup onSave={handleKeyChange} />
+    return (
+      <Layout onLogout={null}>
+        <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
+        <div className="mt-6">
+          <ApiKeySetup onSave={handleKeyChange} />
+        </div>
+      </Layout>
+    )
   }
 
   return (
     <Layout onLogout={handleLogout}>
-      <TabBar activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); handleClear() }} />
+      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {activeTab === 'planning' ? (
         <div className="mt-6">

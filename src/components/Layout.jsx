@@ -1,9 +1,9 @@
 import React from 'react'
 
-export default function Layout({ children, onLogout }) {
+export default function Layout({ children, onLogout, dark = false }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+    <div className={`min-h-screen ${dark ? 'bg-gray-950' : 'bg-gray-50'}`}>
+      <header className={`border-b shadow-sm ${dark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
           <div className="flex items-center gap-3">
             <div
@@ -13,8 +13,8 @@ export default function Layout({ children, onLogout }) {
               V
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 leading-tight">VDT Contenttool</h1>
-              <p className="text-xs text-gray-500 italic">Onderneemt met je mee.</p>
+              <h1 className={`text-xl font-bold leading-tight ${dark ? 'text-white' : 'text-gray-900'}`}>VDT Contenttool</h1>
+              <p className={`text-xs italic ${dark ? 'text-gray-400' : 'text-gray-500'}`}>Onderneemt met je mee.</p>
             </div>
           </div>
           <div className="ml-auto flex items-center gap-3">
@@ -38,7 +38,7 @@ export default function Layout({ children, onLogout }) {
         {children}
       </main>
 
-      <footer className="border-t border-gray-200 bg-white mt-12">
+      <footer className={`border-t mt-12 ${dark ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-xs text-gray-400">
           VDT Advocaten · Hart van Brabantlaan 500, 5038 JA Tilburg · 013-544-0400 · lovetilburg@vdt-advocaten.nl
         </div>
