@@ -2,7 +2,7 @@ name: Deploy naar GitHub Pages
 
 on:
   push:
-    branches: [claude/focused-davinci-blM6T, main]
+    branches: [claude/focused-davinci-blM6T, claude/streampick-omdb-api-Pt3x2, main]
   workflow_dispatch:
 
 permissions:
