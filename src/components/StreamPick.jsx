@@ -1,111 +1,147 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { TOP_CONTENT } from '../data/topContent.js'
 import { fetchAllOmdb, getRating } from '../services/omdbService.js'
 
 const GENRE_ALL = 'Alle genres'
+const WATCHED_KEY = 'streampick_watched'
+
+function loadWatched() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(WATCHED_KEY) || '[]'))
+  } catch {
+    return new Set()
+  }
+}
+
+function saveWatched(set) {
+  localStorage.setItem(WATCHED_KEY, JSON.stringify([...set]))
+}
 
 function parseGenres(genreStr) {
   if (!genreStr || genreStr === 'N/A') return []
   return genreStr.split(',').map((g) => g.trim())
 }
 
-function ImdbStar() {
-  return (
-    <span className="text-yellow-400" title="IMDb rating">★</span>
-  )
-}
-
-function RtDot({ value }) {
-  if (!value) return null
-  const pct = parseInt(value)
-  const fresh = pct >= 60
-  return (
-    <span title={`Rotten Tomatoes: ${value}`} className={fresh ? 'text-red-400' : 'text-gray-500'}>
-      {fresh ? '🍅' : '🤢'} {value}
-    </span>
-  )
-}
-
 function ScoreBadge({ omdb, loading }) {
   if (loading) {
     return (
       <div className="flex gap-2 mt-2">
-        <div className="h-3 w-10 bg-gray-700 rounded animate-pulse" />
-        <div className="h-3 w-10 bg-gray-700 rounded animate-pulse" />
+        <div className="h-3 w-8 bg-gray-700 rounded animate-pulse" />
+        <div className="h-3 w-8 bg-gray-700 rounded animate-pulse" />
       </div>
     )
   }
-
-  if (!omdb || omdb.Response === 'False') {
-    return <p className="text-xs text-gray-600 mt-2">Score niet beschikbaar</p>
-  }
+  if (!omdb || omdb.Response === 'False') return null
 
   const rt = getRating(omdb, 'Rotten Tomatoes')
+  const rtPct = rt ? parseInt(rt) : null
 
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs font-medium">
+    <div className="flex flex-wrap gap-x-2 gap-y-1 mt-2 text-xs font-semibold">
       {omdb.imdbRating && omdb.imdbRating !== 'N/A' && (
         <span className="flex items-center gap-0.5 text-yellow-300">
-          <ImdbStar /> {omdb.imdbRating}
+          ★ {omdb.imdbRating}
         </span>
       )}
-      {rt && <RtDot value={rt} />}
-      {omdb.Metascore && omdb.Metascore !== 'N/A' && (
-        <span className="text-green-400" title="Metacritic">M {omdb.Metascore}</span>
+      {rt && (
+        <span className={rtPct >= 60 ? 'text-red-400' : 'text-gray-500'}>
+          {rtPct >= 60 ? '🍅' : '🤢'} {rt}
+        </span>
       )}
+      {omdb.Metascore && omdb.Metascore !== 'N/A' && (
+        <span className="text-cyan-400">M {omdb.Metascore}</span>
+      )}
+    </div>
+  )
+}
+
+function PosterSkeleton() {
+  return (
+    <div className="w-full h-full bg-gray-800 animate-pulse flex items-center justify-center">
+      <svg className="w-10 h-10 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm3 3h6v6H9V9z" />
+      </svg>
     </div>
   )
 }
 
 function PosterPlaceholder({ title }) {
-  const initials = title
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('')
-
+  const initials = title.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
   return (
-    <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-500 text-2xl font-bold select-none">
-      {initials}
+    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-gray-800 to-gray-900 gap-2">
+      <span className="text-3xl font-black text-gray-600 select-none">{initials}</span>
+      <span className="text-[9px] text-gray-600 text-center px-2 leading-tight select-none line-clamp-2">{title}</span>
     </div>
   )
 }
 
-function ContentCard({ item, omdb, loading }) {
+function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched }) {
+  const [imgLoaded, setImgLoaded] = useState(false)
   const [imgError, setImgError] = useState(false)
+
   const posterUrl = omdb?.Poster && omdb.Poster !== 'N/A' ? omdb.Poster : null
   const genres = parseGenres(omdb?.Genre)
   const runtime = omdb?.Runtime && omdb.Runtime !== 'N/A' ? omdb.Runtime : null
 
+  // Reset image state when poster URL changes
+  useEffect(() => {
+    setImgLoaded(false)
+    setImgError(false)
+  }, [posterUrl])
+
   return (
-    <div className="bg-gray-900 rounded-xl overflow-hidden flex flex-col transition-transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/60 cursor-default group">
+    <div
+      className={`relative bg-gray-900 rounded-xl overflow-hidden flex flex-col transition-all duration-200 hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/60 ${
+        watched ? 'opacity-50 saturate-50' : ''
+      }`}
+    >
       {/* Poster */}
       <div className="relative aspect-[2/3] bg-gray-800 overflow-hidden">
-        {posterUrl && !imgError ? (
-          <img
-            src={posterUrl}
-            alt={item.title}
-            className="w-full h-full object-cover"
-            onError={() => setImgError(true)}
-            loading="lazy"
-          />
-        ) : (
+        {/* Skeleton shown while loading OR while image is fetching */}
+        {!omdb && loadingScores && <PosterSkeleton />}
+
+        {/* Placeholder when no poster available */}
+        {(omdb || !loadingScores) && (!posterUrl || imgError) && (
           <PosterPlaceholder title={item.title} />
+        )}
+
+        {/* Real poster */}
+        {posterUrl && !imgError && (
+          <>
+            {!imgLoaded && <PosterSkeleton />}
+            <img
+              src={posterUrl}
+              alt={item.title}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+              loading="lazy"
+            />
+          </>
+        )}
+
+        {/* Watched overlay */}
+        {watched && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+            <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center shadow-lg">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
         )}
 
         {/* Type badge */}
         <span
-          className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-            item.type === 'movie'
-              ? 'bg-blue-600 text-white'
-              : 'bg-purple-600 text-white'
+          className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow ${
+            item.type === 'movie' ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'
           }`}
         >
           {item.type === 'movie' ? 'Film' : 'Serie'}
         </span>
 
         {/* Live badge */}
-        {omdb?.Response === 'True' && (
+        {omdb?.Response === 'True' && !watched && (
           <span className="absolute top-2 right-2 flex items-center gap-1 text-[9px] font-semibold bg-black/70 text-green-400 px-1.5 py-0.5 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
             LIVE
@@ -125,16 +161,28 @@ function ContentCard({ item, omdb, loading }) {
         </div>
 
         {genres.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {genres.slice(0, 3).map((g) => (
-              <span key={g} className="text-[10px] bg-gray-700 text-gray-300 px-1.5 py-0.5 rounded">
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {genres.slice(0, 2).map((g) => (
+              <span key={g} className="text-[10px] bg-gray-700/80 text-gray-300 px-1.5 py-0.5 rounded">
                 {g}
               </span>
             ))}
           </div>
         )}
 
-        <ScoreBadge omdb={omdb} loading={loading && !omdb} />
+        <ScoreBadge omdb={omdb} loading={loadingScores && !omdb} />
+
+        {/* Gezien button */}
+        <button
+          onClick={() => onToggleWatched(item.imdbId)}
+          className={`mt-3 w-full py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            watched
+              ? 'bg-green-500/20 text-green-400 border border-green-500/40 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/40'
+              : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-green-500/20 hover:text-green-400 hover:border-green-500/40'
+          }`}
+        >
+          {watched ? '✓ Gezien — ongedaan maken' : '+ Markeer als gezien'}
+        </button>
       </div>
     </div>
   )
@@ -146,12 +194,24 @@ export default function StreamPick() {
   const [isLoading, setIsLoading] = useState(false)
   const [loadStarted, setLoadStarted] = useState(false)
 
-  const [filter, setFilter] = useState('all')        // 'all' | 'movie' | 'series'
+  const [watched, setWatched] = useState(loadWatched)
+  const [hideWatched, setHideWatched] = useState(false)
+
+  const [filter, setFilter] = useState('all')
   const [genreFilter, setGenreFilter] = useState(GENRE_ALL)
   const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState('imdb')       // 'imdb' | 'year' | 'title'
+  const [sortBy, setSortBy] = useState('imdb')
 
-  // Collect all unique genres from loaded OMDB data
+  const toggleWatched = useCallback((imdbId) => {
+    setWatched((prev) => {
+      const next = new Set(prev)
+      if (next.has(imdbId)) next.delete(imdbId)
+      else next.add(imdbId)
+      saveWatched(next)
+      return next
+    })
+  }, [])
+
   const allGenres = useMemo(() => {
     const set = new Set()
     Object.values(omdbMap).forEach((d) => {
@@ -162,18 +222,16 @@ export default function StreamPick() {
     return [GENRE_ALL, ...Array.from(set).sort()]
   }, [omdbMap])
 
-  // Filtered + sorted list
   const visible = useMemo(() => {
     let list = TOP_CONTENT
 
     if (filter === 'movie') list = list.filter((i) => i.type === 'movie')
     if (filter === 'series') list = list.filter((i) => i.type === 'series')
 
+    if (hideWatched) list = list.filter((i) => !watched.has(i.imdbId))
+
     if (genreFilter !== GENRE_ALL) {
-      list = list.filter((i) => {
-        const d = omdbMap[i.imdbId]
-        return d?.Genre?.includes(genreFilter)
-      })
+      list = list.filter((i) => omdbMap[i.imdbId]?.Genre?.includes(genreFilter))
     }
 
     if (search.trim()) {
@@ -181,44 +239,41 @@ export default function StreamPick() {
       list = list.filter((i) => i.title.toLowerCase().includes(q))
     }
 
-    // Sort
     list = [...list].sort((a, b) => {
+      // Watched items always go to the bottom (unless hidden)
+      const aw = watched.has(a.imdbId) ? 1 : 0
+      const bw = watched.has(b.imdbId) ? 1 : 0
+      if (aw !== bw) return aw - bw
+
       if (sortBy === 'year') return b.year - a.year
       if (sortBy === 'title') return a.title.localeCompare(b.title)
-      // imdb rating sort (default)
       const ra = parseFloat(omdbMap[a.imdbId]?.imdbRating) || 0
       const rb = parseFloat(omdbMap[b.imdbId]?.imdbRating) || 0
       return rb - ra
     })
 
     return list
-  }, [filter, genreFilter, search, sortBy, omdbMap])
+  }, [filter, genreFilter, search, sortBy, omdbMap, watched, hideWatched])
 
   async function loadScores() {
     if (isLoading || loadStarted) return
     setLoadStarted(true)
     setIsLoading(true)
     const ids = TOP_CONTENT.map((i) => i.imdbId)
-
-    await fetchAllOmdb(ids, (done, total) => {
-      setLoadedCount(done)
-    }).then((results) => {
-      setOmdbMap(results)
-    })
-
+    const results = await fetchAllOmdb(ids, (done) => setLoadedCount(done))
+    setOmdbMap(results)
     setIsLoading(false)
   }
 
-  useEffect(() => {
-    loadScores()
-  }, [])
+  useEffect(() => { loadScores() }, [])
 
   const loadPct = Math.round((loadedCount / TOP_CONTENT.length) * 100)
+  const watchedCount = watched.size
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 px-4 py-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <span className="text-3xl">🎬</span> StreamPick
@@ -228,7 +283,10 @@ export default function StreamPick() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-3 text-xs">
+          {watchedCount > 0 && (
+            <span className="text-green-400 font-medium">✓ {watchedCount} gezien</span>
+          )}
           {isLoading ? (
             <span className="flex items-center gap-1.5 text-yellow-400">
               <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse inline-block" />
@@ -237,7 +295,7 @@ export default function StreamPick() {
           ) : loadStarted ? (
             <span className="flex items-center gap-1.5 text-green-400">
               <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
-              {Object.values(omdbMap).filter(d => d?.Response === 'True').length} scores geladen · OMDB live
+              OMDB live
             </span>
           ) : null}
         </div>
@@ -251,30 +309,21 @@ export default function StreamPick() {
             <span>{loadPct}%</span>
           </div>
           <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-green-500 rounded-full transition-all duration-300"
-              style={{ width: `${loadPct}%` }}
-            />
+            <div className="h-full bg-green-500 rounded-full transition-all duration-300" style={{ width: `${loadPct}%` }} />
           </div>
         </div>
       )}
 
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        {/* Type filter */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-5 flex-wrap">
+        {/* Type */}
         <div className="flex gap-1 bg-gray-900 p-1 rounded-lg shrink-0">
-          {[
-            { id: 'all', label: 'Alles' },
-            { id: 'movie', label: 'Films' },
-            { id: 'series', label: 'Series' },
-          ].map((t) => (
+          {[{ id: 'all', label: 'Alles' }, { id: 'movie', label: 'Films' }, { id: 'series', label: 'Series' }].map((t) => (
             <button
               key={t.id}
               onClick={() => setFilter(t.id)}
               className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors ${
-                filter === t.id
-                  ? 'bg-white text-gray-900'
-                  : 'text-gray-400 hover:text-white'
+                filter === t.id ? 'bg-white text-gray-900' : 'text-gray-400 hover:text-white'
               }`}
             >
               {t.label}
@@ -282,15 +331,25 @@ export default function StreamPick() {
           ))}
         </div>
 
-        {/* Genre filter */}
+        {/* Hide watched toggle */}
+        <button
+          onClick={() => setHideWatched((v) => !v)}
+          className={`px-3 py-1.5 text-sm rounded-lg font-medium border transition-all shrink-0 ${
+            hideWatched
+              ? 'bg-green-500/20 text-green-400 border-green-500/40'
+              : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-white'
+          }`}
+        >
+          {hideWatched ? '👁 Toon gezien' : '🙈 Verberg gezien'}
+        </button>
+
+        {/* Genre */}
         <select
           value={genreFilter}
           onChange={(e) => setGenreFilter(e.target.value)}
           className="bg-gray-900 text-gray-200 text-sm rounded-lg px-3 py-2 border border-gray-700 focus:outline-none focus:border-gray-500"
         >
-          {allGenres.map((g) => (
-            <option key={g} value={g}>{g}</option>
-          ))}
+          {allGenres.map((g) => <option key={g} value={g}>{g}</option>)}
         </select>
 
         {/* Sort */}
@@ -305,7 +364,7 @@ export default function StreamPick() {
         </select>
 
         {/* Search */}
-        <div className="relative flex-1 min-w-0">
+        <div className="relative flex-1 min-w-40">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
           <input
             type="text"
@@ -317,10 +376,8 @@ export default function StreamPick() {
         </div>
       </div>
 
-      {/* Results count */}
-      <p className="text-xs text-gray-500 mb-4">
-        {visible.length} van {TOP_CONTENT.length} titels
-      </p>
+      {/* Count */}
+      <p className="text-xs text-gray-500 mb-4">{visible.length} van {TOP_CONTENT.length} titels</p>
 
       {/* Grid */}
       {visible.length === 0 ? (
@@ -335,7 +392,9 @@ export default function StreamPick() {
               key={item.imdbId}
               item={item}
               omdb={omdbMap[item.imdbId]}
-              loading={isLoading}
+              loadingScores={isLoading}
+              watched={watched.has(item.imdbId)}
+              onToggleWatched={toggleWatched}
             />
           ))}
         </div>
