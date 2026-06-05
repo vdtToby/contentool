@@ -2,21 +2,18 @@ name: Deploy naar GitHub Pages
 
 on:
   push:
-    branches: [claude/focused-davinci-blM6T, claude/streampick-omdb-api-Pt3x2, main]
+    branches:
+      - claude/streampick-omdb-api-Pt3x2
+      - claude/focused-davinci-blM6T
+      - main
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-  administration: write
+  contents: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout
@@ -36,20 +33,9 @@ jobs:
         env:
           VITE_BASE_URL: /contentool/
 
-      - name: Repo publiek maken (zodat Pages gratis werkt)
-        run: gh repo edit "$GITHUB_REPOSITORY" --visibility public
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
-
-      - name: GitHub Pages configureren
-        uses: actions/configure-pages@v4
-
-      - name: Build-bestanden uploaden
-        uses: actions/upload-pages-artifact@v3
+      - name: Deployen naar gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
-
-      - name: Deployen naar Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true
