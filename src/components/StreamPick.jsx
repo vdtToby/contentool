@@ -109,7 +109,7 @@ function PosterPlaceholder({ title }) {
   )
 }
 
-// Shared poster image logic with 2-source fallback: TMDB CDN → OMDB/Amazon
+// Shared poster image logic: TMDB CDN → OMDB/Amazon, retries when OMDB loads later
 function usePoster(item, omdb) {
   const [srcIdx, setSrcIdx] = useState(0)
   const [imgLoaded, setImgLoaded] = useState(false)
@@ -120,13 +120,23 @@ function usePoster(item, omdb) {
     omdb?.Poster && omdb.Poster !== 'N/A' ? omdb.Poster : null,
   ].filter(Boolean), [item.poster, omdb?.Poster])
 
-  const posterUrl = srcs[srcIdx] ?? null
-
+  // Reset when switching to a different item
   useEffect(() => {
-    setSrcIdx(0)
-    setImgLoaded(false)
-    setImgError(false)
+    setSrcIdx(0); setImgLoaded(false); setImgError(false)
   }, [item.imdbId ?? item.id])
+
+  // When OMDB loads later and adds a new source, retry if we already gave up
+  const imgErrorRef = useRef(false)
+  useEffect(() => { imgErrorRef.current = imgError }, [imgError])
+  useEffect(() => {
+    if (imgErrorRef.current && srcs.length > 1) {
+      setSrcIdx(srcs.length - 1) // jump straight to the new fallback source
+      setImgError(false)
+      setImgLoaded(false)
+    }
+  }, [srcs.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const posterUrl = srcs[srcIdx] ?? null
 
   const handleError = useCallback(() => {
     if (srcIdx + 1 < srcs.length) {
