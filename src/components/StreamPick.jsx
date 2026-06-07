@@ -798,7 +798,17 @@ export default function StreamPick() {
   [])
   const allContent = useMemo(() => {
     if (extraContent.length === 0) return TOP_CONTENT
-    return [...TOP_CONTENT, ...extraContent.filter(i => !existingTmdbIds.has(i.tmdbId))]
+    // Build tmdbId → poster map from TMDB API data (these paths are always correct)
+    const tmdbPosterMap = new Map(
+      extraContent.filter(i => i.tmdbId && i.poster).map(i => [i.tmdbId, i.poster])
+    )
+    // Patch hardcoded poster paths in TOP_CONTENT with API-confirmed paths
+    const patched = TOP_CONTENT.map(item =>
+      (item.tmdbId && tmdbPosterMap.has(item.tmdbId))
+        ? { ...item, poster: tmdbPosterMap.get(item.tmdbId) }
+        : item
+    )
+    return [...patched, ...extraContent.filter(i => !existingTmdbIds.has(i.tmdbId))]
   }, [extraContent, existingTmdbIds])
 
   // TVmaze poster URLs for EASY_WATCH items (fetched once, cached 7 days)
