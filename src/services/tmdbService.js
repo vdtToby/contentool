@@ -4,6 +4,15 @@ export const TMDB_IMG = 'https://image.tmdb.org/t/p/w300'
 const CACHE_KEY = 'tmdb_new_releases_v2'
 const CACHE_TTL = 24 * 60 * 60 * 1000
 
+// Support both v3 API key (query param) and v4 Bearer token (Authorization header)
+const isBearer = KEY.startsWith('eyJ')
+function tmdbFetch(url) {
+  if (!KEY) return Promise.resolve({ ok: false })
+  if (isBearer) return fetch(url, { headers: { Authorization: `Bearer ${KEY}` } })
+  const sep = url.includes('?') ? '&' : '?'
+  return fetch(`${url}${sep}api_key=${KEY}`)
+}
+
 // ── Genre ID → label mapping ───────────────────────────────────────────────────
 
 const MOVIE_GENRES = {
@@ -59,8 +68,8 @@ export async function fetchNewReleases() {
 
   try {
     const [mRes, tvRes] = await Promise.all([
-      fetch(`${BASE}/discover/movie?api_key=${KEY}&release_date.gte=${from}&release_date.lte=${to}&sort_by=popularity.desc&vote_count.gte=30&include_adult=false`),
-      fetch(`${BASE}/discover/tv?api_key=${KEY}&first_air_date.gte=${from}&first_air_date.lte=${to}&sort_by=popularity.desc&vote_count.gte=15&include_adult=false`),
+      tmdbFetch(`${BASE}/discover/movie?release_date.gte=${from}&release_date.lte=${to}&sort_by=popularity.desc&vote_count.gte=30&include_adult=false`),
+      tmdbFetch(`${BASE}/discover/tv?first_air_date.gte=${from}&first_air_date.lte=${to}&sort_by=popularity.desc&vote_count.gte=15&include_adult=false`),
     ])
     if (!mRes.ok || !tvRes.ok) return null
     const [mov, tv] = await Promise.all([mRes.json(), tvRes.json()])
@@ -98,7 +107,7 @@ export async function fetchTopRatedContent() {
   if (cached) return cached
 
   const get = (type, page) =>
-    fetch(`${BASE}/${type}/top_rated?api_key=${KEY}&page=${page}&language=en-US`)
+    tmdbFetch(`${BASE}/${type}/top_rated?page=${page}&language=en-US`)
       .then(r => r.ok ? r.json() : { results: [] })
       .catch(() => ({ results: [] }))
 
