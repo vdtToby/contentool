@@ -109,23 +109,28 @@ export const TOP_CONTENT = [
 
 // ── Recent releases (2023-2025) — shown in the "Nieuw" carousel ───────────────
 export const NEW_RELEASES = [
-  { imdbId: 'tt15398776', title: 'Oppenheimer',       year: 2023, type: 'movie',  poster: `${T}/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg` },
-  { imdbId: 'tt1517268',  title: 'Barbie',            year: 2023, type: 'movie',  poster: `${T}/iuFNMS8vlsBQ2aGS3c0Tv4MAAOR.jpg` },
-  { imdbId: 'tt15239678', title: 'Dune: Part Two',    year: 2024, type: 'movie',  poster: `${T}/cdqLnri3NEGcmfnqwk2TSIYtddg.jpg` },
-  { imdbId: 'tt11621930', title: 'Poor Things',       year: 2023, type: 'movie',  poster: `${T}/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg` },
-  { imdbId: 'tt17351924', title: 'Saltburn',          year: 2023, type: 'movie',  poster: `${T}/qjhahNLSZ705D5tief7oGDhLoPc.jpg` },
-  { imdbId: 'tt28607951', title: 'Anora',             year: 2024, type: 'movie',  poster: `${T}/kkxReFUHB2HVBQ8TpXmKoNOEm4e.jpg` },
-  { imdbId: 'tt16160196', title: 'Conclave',          year: 2024, type: 'movie',  poster: `${T}/m8mFHv5DnbTABkdXuXxwAqzTNFl.jpg` },
-  { imdbId: 'tt17526714', title: 'The Substance',     year: 2024, type: 'movie',  poster: `${T}/lqoMzCcZYEFK729d6qzt349fB4o.jpg` },
-  { imdbId: 'tt20215234', title: 'Emilia Pérez',      year: 2024, type: 'movie',  poster: `${T}/2UBKhUGcAYLQgVqYIDtN8ij94jV.jpg` },
-  { imdbId: 'tt17009710', title: 'Anatomy of a Fall', year: 2023, type: 'movie',  poster: `${T}/qqVIU9mBkM11xm6MdcHlXq7IOQH.jpg` },
-  { imdbId: 'tt2370248',  title: 'Shōgun',            year: 2024, type: 'series', poster: `${T}/7O4iVfOMQmdCSxhOg4KOCwsQkjJ.jpg` },
-  { imdbId: 'tt12637874', title: 'Fallout',           year: 2024, type: 'series', poster: `${T}/AnsSKR9pBrFMJHFezPGKMWHH7XL.jpg` },
-  { imdbId: 'tt21064584', title: 'Baby Reindeer',     year: 2024, type: 'series', poster: `${T}/3JIVT9sGYVNHp8PNMOX4F0xBjdF.jpg` },
-  { imdbId: 'tt15320362', title: 'Ripley',            year: 2024, type: 'series', poster: `${T}/dcBFOD7PJpU5fO40ERXFrS8s6tm.jpg` },
-  { imdbId: 'tt13016388', title: '3 Body Problem',    year: 2024, type: 'series', poster: `${T}/3uTxPIdVEXxHpsHSmwJFqBHMlqM.jpg` },
-  { imdbId: 'tt15435876', title: 'The Penguin',       year: 2024, type: 'series', poster: `${T}/wRejHNcGcRFQR0PMHODBRxF4tTB.jpg` },
-  { imdbId: 'tt32686787', title: 'Adolescence',       year: 2025, type: 'series', poster: `${T}/gsRJesuHxFPOILkAnhGOCrCMBCR.jpg` },
+  // ── 2025 films ──
+  { imdbId: 'tt6263850',  title: 'Deadpool & Wolverine',               year: 2024, type: 'movie',  poster: null },
+  { imdbId: 'tt1262426',  title: 'Wicked',                             year: 2024, type: 'movie',  poster: null },
+  { imdbId: 'tt9218128',  title: 'Gladiator II',                       year: 2024, type: 'movie',  poster: null },
+  { imdbId: 'tt18412256', title: 'Alien: Romulus',                     year: 2024, type: 'movie',  poster: null },
+  { imdbId: 'tt22022452', title: 'Inside Out 2',                       year: 2024, type: 'movie',  poster: null },
+  { imdbId: 'tt15239678', title: 'Dune: Part Two',                     year: 2024, type: 'movie',  poster: `${T}/cdqLnri3NEGcmfnqwk2TSIYtddg.jpg` },
+  { imdbId: 'tt28607951', title: 'Anora',                              year: 2024, type: 'movie',  poster: `${T}/kkxReFUHB2HVBQ8TpXmKoNOEm4e.jpg` },
+  { imdbId: 'tt16160196', title: 'Conclave',                           year: 2024, type: 'movie',  poster: `${T}/m8mFHv5DnbTABkdXuXxwAqzTNFl.jpg` },
+  { imdbId: 'tt17526714', title: 'The Substance',                      year: 2024, type: 'movie',  poster: `${T}/lqoMzCcZYEFK729d6qzt349fB4o.jpg` },
+  { imdbId: 'tt20215234', title: 'Emilia Pérez',                       year: 2024, type: 'movie',  poster: `${T}/2UBKhUGcAYLQgVqYIDtN8ij94jV.jpg` },
+  // ── 2025 series ──
+  { imdbId: 'tt32686787', title: 'Adolescence',                        year: 2025, type: 'series', poster: `${T}/gsRJesuHxFPOILkAnhGOCrCMBCR.jpg` },
+  { imdbId: 'tt11280740', title: 'Severance',                          year: 2025, type: 'series', poster: null },
+  { imdbId: 'tt3581920',  title: 'The Last of Us',                     year: 2025, type: 'series', poster: null },
+  // ── 2024 series ──
+  { imdbId: 'tt2370248',  title: 'Shōgun',                             year: 2024, type: 'series', poster: `${T}/7O4iVfOMQmdCSxhOg4KOCwsQkjJ.jpg` },
+  { imdbId: 'tt12637874', title: 'Fallout',                            year: 2024, type: 'series', poster: `${T}/AnsSKR9pBrFMJHFezPGKMWHH7XL.jpg` },
+  { imdbId: 'tt21064584', title: 'Baby Reindeer',                      year: 2024, type: 'series', poster: `${T}/3JIVT9sGYVNHp8PNMOX4F0xBjdF.jpg` },
+  { imdbId: 'tt15320362', title: 'Ripley',                             year: 2024, type: 'series', poster: `${T}/dcBFOD7PJpU5fO40ERXFrS8s6tm.jpg` },
+  { imdbId: 'tt13016388', title: '3 Body Problem',                     year: 2024, type: 'series', poster: `${T}/3uTxPIdVEXxHpsHSmwJFqBHMlqM.jpg` },
+  { imdbId: 'tt15435876', title: 'The Penguin',                        year: 2024, type: 'series', poster: `${T}/wRejHNcGcRFQR0PMHODBRxF4tTB.jpg` },
 ]
 
 // ── Makkelijk wegkijkseries — curated easy-watch category ────────────────────
