@@ -330,18 +330,17 @@ function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSe
     return () => clearTimeout(t)
   }, [search])
 
-  // Build genre → items map from OMDB data
+  // Build genre → items map from static genres on each item (no OMDB dependency)
   const genreMap = useMemo(() => {
     const map = {}
     TOP_CONTENT.forEach(item => {
-      const genres = parseGenres(omdbMap[item.imdbId]?.Genre)
-      genres.forEach(g => {
+      ;(item.genres || []).forEach(g => {
         if (!map[g]) map[g] = []
         map[g].push(item)
       })
     })
     return map
-  }, [omdbMap])
+  }, [])
 
   // Ordered genres with at least 3 items
   const activeGenres = useMemo(() =>
@@ -372,7 +371,7 @@ function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSe
         )}
       </div>
 
-      {/* Search results */}
+      {/* Search results or genre carousels */}
       {searchResults !== null ? (
         <>
           <p className="text-xs text-gray-500 mb-4">{searchResults.length} resultaten voor "{search}"</p>
@@ -396,22 +395,8 @@ function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSe
             </div>
           )}
         </>
-      ) : loadingScores && activeGenres.length === 0 ? (
-        /* Loading skeletons */
-        <div className="space-y-8">
-          {[0, 1, 2].map(i => (
-            <div key={i}>
-              <div className="h-6 w-32 bg-gray-800 rounded animate-pulse mb-3" />
-              <div className="flex gap-3">
-                {[0, 1, 2, 3, 4].map(j => (
-                  <div key={j} className="flex-none w-36 aspect-[2/3] bg-gray-800 rounded-xl animate-pulse" />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
       ) : (
-        /* Genre carousels */
+        /* Genre carousels — always visible, ratings load async via OMDB */
         <>
           {/* Curated "Makkelijk wegkijken" row always first */}
           {easyWatchItems.length > 0 && (
@@ -451,7 +436,7 @@ function GenreView({ genre, customItems, customLabel, omdbMap, watched, onToggle
   const [hideWatched, setHideWatched] = useState(false)
 
   const items = useMemo(() => {
-    let list = customItems ?? TOP_CONTENT.filter(i => parseGenres(omdbMap[i.imdbId]?.Genre).includes(genre))
+    let list = customItems ?? TOP_CONTENT.filter(i => (i.genres || []).includes(genre))
     if (typeFilter === 'movie') list = list.filter(i => i.type === 'movie')
     if (typeFilter === 'series') list = list.filter(i => i.type === 'series')
     if (hideWatched) list = list.filter(i => !watched.has(i.imdbId))
@@ -462,7 +447,7 @@ function GenreView({ genre, customItems, customLabel, omdbMap, watched, onToggle
       const rb = parseFloat(omdbMap[b.imdbId]?.imdbRating) || 0
       return rb - ra
     })
-  }, [genre, omdbMap, watched, sortBy, typeFilter, hideWatched])
+  }, [genre, customItems, omdbMap, watched, sortBy, typeFilter, hideWatched])
 
   return (
     <div>
