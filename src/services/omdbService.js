@@ -8,6 +8,8 @@ function getCached(imdbId) {
     if (!raw) return null
     const { data, timestamp } = JSON.parse(raw)
     if (Date.now() - timestamp > CACHE_TTL) return null
+    // Don't return cached data if poster is missing — force re-fetch
+    if (data.Response === 'True' && (!data.Poster || data.Poster === 'N/A')) return null
     return data
   } catch {
     return null
@@ -22,6 +24,11 @@ function setCache(imdbId, data) {
   }
 }
 
+export function clearOmdbCache() {
+  const keys = Object.keys(localStorage).filter((k) => k.startsWith('omdb_'))
+  keys.forEach((k) => localStorage.removeItem(k))
+}
+
 export async function fetchOmdbItem(imdbId) {
   const cached = getCached(imdbId)
   if (cached) return cached
@@ -30,8 +37,14 @@ export async function fetchOmdbItem(imdbId) {
   const res = await fetch(url)
   const data = await res.json()
 
-  if (data.Response === 'True') {
+  // Only cache if we have a valid poster
+  if (data.Response === 'True' && data.Poster && data.Poster !== 'N/A') {
     setCache(imdbId, data)
+  } else if (data.Response === 'True') {
+    // Cache without poster condition for scores, but short TTL (1h) so we retry posters sooner
+    try {
+      localStorage.setItem(`omdb_${imdbId}`, JSON.stringify({ data, timestamp: Date.now() - (CACHE_TTL - 60 * 60 * 1000) }))
+    } catch { /* ignore */ }
   }
 
   return data

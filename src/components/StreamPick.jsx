@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { TOP_CONTENT } from '../data/topContent.js'
-import { fetchAllOmdb, getRating } from '../services/omdbService.js'
+import { fetchAllOmdb, getRating, clearOmdbCache } from '../services/omdbService.js'
 
 const GENRE_ALL = 'Alle genres'
 const WATCHED_KEY = 'streampick_watched'
@@ -112,10 +112,10 @@ function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched }) {
             <img
               src={posterUrl}
               alt={item.title}
+              referrerPolicy="no-referrer"
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setImgLoaded(true)}
               onError={() => setImgError(true)}
-              loading="lazy"
             />
           </>
         )}
@@ -255,10 +255,14 @@ export default function StreamPick() {
     return list
   }, [filter, genreFilter, search, sortBy, omdbMap, watched, hideWatched])
 
-  async function loadScores() {
-    if (isLoading || loadStarted) return
+  async function loadScores(forceRefresh = false) {
+    if (isLoading) return
+    if (!forceRefresh && loadStarted) return
+    if (forceRefresh) clearOmdbCache()
     setLoadStarted(true)
     setIsLoading(true)
+    setLoadedCount(0)
+    setOmdbMap({})
     const ids = TOP_CONTENT.map((i) => i.imdbId)
     const results = await fetchAllOmdb(ids, (done) => setLoadedCount(done))
     setOmdbMap(results)
@@ -298,6 +302,15 @@ export default function StreamPick() {
               OMDB live
             </span>
           ) : null}
+          {!isLoading && loadStarted && (
+            <button
+              onClick={() => loadScores(true)}
+              className="text-gray-500 hover:text-gray-300 transition-colors"
+              title="Ververs alle data (wist cache)"
+            >
+              ↺ Ververs
+            </button>
+          )}
         </div>
       </div>
 
