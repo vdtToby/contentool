@@ -149,13 +149,16 @@ function usePoster(item, omdb) {
 
 // ── Compact poster card (for category carousels) ───────────────────────────────
 
-function PosterCard({ item, omdb, watched, onToggleWatched }) {
+function PosterCard({ item, omdb, watched, onToggleWatched, onSelect }) {
   const watchKey = item.imdbId ?? item.id
   const { posterUrl, imgLoaded, setImgLoaded, imgError, handleError } = usePoster(item, omdb)
 
   return (
     <div className="flex-none w-36 snap-start">
-      <div className={`relative aspect-[2/3] rounded-xl overflow-hidden bg-gray-800 transition-all duration-200 hover:scale-[1.03] hover:shadow-xl hover:shadow-black/60 ${watched ? 'opacity-50 saturate-50' : ''}`}>
+      <div
+        onClick={() => onSelect && onSelect(item)}
+        className={`relative aspect-[2/3] rounded-xl overflow-hidden bg-gray-800 transition-all duration-200 hover:scale-[1.03] hover:shadow-xl hover:shadow-black/60 ${onSelect ? 'cursor-pointer' : ''} ${watched ? 'opacity-50 saturate-50' : ''}`}
+      >
         {!posterUrl || imgError
           ? <PosterPlaceholder title={item.title} />
           : <>
@@ -195,7 +198,7 @@ function PosterCard({ item, omdb, watched, onToggleWatched }) {
           )}
         </div>
         <button
-          onClick={() => onToggleWatched(watchKey)}
+          onClick={e => { e.stopPropagation(); onToggleWatched(watchKey) }}
           className={`mt-1.5 w-full py-1 rounded-md text-[10px] font-semibold transition-all ${
             watched
               ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30'
@@ -211,7 +214,7 @@ function PosterCard({ item, omdb, watched, onToggleWatched }) {
 
 // ── Full content card (for detail/search views) ────────────────────────────────
 
-function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched }) {
+function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched, onSelect }) {
   const watchKey = item.imdbId ?? item.id
   const { posterUrl, imgLoaded, setImgLoaded, imgError, handleError } = usePoster(item, omdb)
   const genres = parseGenres(omdb?.Genre)
@@ -219,7 +222,10 @@ function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched }) {
 
   return (
     <div className={`relative bg-gray-900 rounded-xl overflow-hidden flex flex-col transition-all duration-200 hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/60 ${watched ? 'opacity-50 saturate-50' : ''}`}>
-      <div className="relative aspect-[2/3] bg-gray-800 overflow-hidden">
+      <div
+        onClick={() => onSelect && onSelect(item)}
+        className={`relative aspect-[2/3] bg-gray-800 overflow-hidden ${onSelect ? 'cursor-pointer' : ''}`}
+      >
         {!posterUrl || imgError
           ? <PosterPlaceholder title={item.title} />
           : <>
@@ -277,6 +283,14 @@ function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched }) {
         >
           {watched ? '✓ Gezien — ongedaan maken' : '+ Markeer als gezien'}
         </button>
+        {onSelect && (
+          <button
+            onClick={() => onSelect(item)}
+            className="mt-1.5 w-full py-1.5 rounded-lg text-xs font-semibold text-gray-500 hover:text-gray-300 border border-gray-800 hover:border-gray-600 transition-all"
+          >
+            ℹ Info
+          </button>
+        )}
       </div>
     </div>
   )
@@ -284,7 +298,7 @@ function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched }) {
 
 // ── Category carousel row ──────────────────────────────────────────────────────
 
-function CategoryRow({ genre, label: labelOverride, items, omdbMap, watched, onToggleWatched, onSeeMore, seeMoreKey }) {
+function CategoryRow({ genre, label: labelOverride, items, omdbMap, watched, onToggleWatched, onSeeMore, seeMoreKey, onSelect }) {
   const scrollRef = useRef(null)
   const label = labelOverride || GENRE_NL[genre] || genre
   const seeMoreArg = seeMoreKey ?? genre
@@ -317,6 +331,7 @@ function CategoryRow({ genre, label: labelOverride, items, omdbMap, watched, onT
             omdb={omdbMap[item.imdbId]}
             watched={watched.has(item.imdbId ?? item.id)}
             onToggleWatched={onToggleWatched}
+            onSelect={onSelect}
           />
         ))}
       </div>
@@ -326,7 +341,7 @@ function CategoryRow({ genre, label: labelOverride, items, omdbMap, watched, onT
 
 // ── Categories home view ───────────────────────────────────────────────────────
 
-function CategoriesView({ content, omdbMap, watched, onToggleWatched, loadingScores, onSeeMore, easyWatchItems }) {
+function CategoriesView({ content, omdbMap, watched, onToggleWatched, loadingScores, onSeeMore, easyWatchItems, onSelect }) {
   const [search, setSearch] = useState('')
 
   // Save search term to history after delay
@@ -397,6 +412,7 @@ function CategoriesView({ content, omdbMap, watched, onToggleWatched, loadingSco
                   loadingScores={loadingScores}
                   watched={watched.has(item.imdbId ?? item.id)}
                   onToggleWatched={onToggleWatched}
+                  onSelect={onSelect}
                 />
               ))}
             </div>
@@ -415,6 +431,7 @@ function CategoriesView({ content, omdbMap, watched, onToggleWatched, loadingSco
               watched={watched}
               onToggleWatched={onToggleWatched}
               onSeeMore={onSeeMore}
+              onSelect={onSelect}
             />
           )}
           {activeGenres.map(genre => (
@@ -426,6 +443,7 @@ function CategoriesView({ content, omdbMap, watched, onToggleWatched, loadingSco
               watched={watched}
               onToggleWatched={onToggleWatched}
               onSeeMore={onSeeMore}
+              onSelect={onSelect}
             />
           ))}
         </>
@@ -436,7 +454,7 @@ function CategoriesView({ content, omdbMap, watched, onToggleWatched, loadingSco
 
 // ── Genre detail view (all items for one genre) ────────────────────────────────
 
-function GenreView({ genre, content, customItems, customLabel, omdbMap, watched, onToggleWatched, loadingScores, onBack }) {
+function GenreView({ genre, content, customItems, customLabel, omdbMap, watched, onToggleWatched, loadingScores, onBack, onSelect }) {
   const label = customLabel || GENRE_NL[genre] || genre
   const [sortBy, setSortBy] = useState('rating')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -502,6 +520,7 @@ function GenreView({ genre, content, customItems, customLabel, omdbMap, watched,
             loadingScores={loadingScores}
             watched={watched.has(item.imdbId ?? item.id)}
             onToggleWatched={onToggleWatched}
+            onSelect={onSelect}
           />
         ))}
       </div>
@@ -511,7 +530,7 @@ function GenreView({ genre, content, customItems, customLabel, omdbMap, watched,
 
 // ── Aangeraden view ────────────────────────────────────────────────────────────
 
-function AangeradenView({ content, omdbMap, watched, onToggleWatched, loadingScores, onGoToMain }) {
+function AangeradenView({ content, omdbMap, watched, onToggleWatched, loadingScores, onGoToMain, onSelect }) {
   const searchHistory = useMemo(() => loadSearchHistory(), [])
 
   const recommendations = useMemo(() => {
@@ -586,8 +605,75 @@ function AangeradenView({ content, omdbMap, watched, onToggleWatched, loadingSco
             loadingScores={loadingScores}
             watched={watched.has(item.imdbId ?? item.id)}
             onToggleWatched={onToggleWatched}
+            onSelect={onSelect}
           />
         ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Detail modal (description + YouTube trailer) ──────────────────────────────
+
+function DetailModal({ item, omdb, onClose }) {
+  const { posterUrl, imgLoaded, setImgLoaded, imgError, handleError } = usePoster(item, omdb)
+
+  const plot = useMemo(() => {
+    const raw = (omdb?.Plot && omdb.Plot !== 'N/A') ? omdb.Plot
+              : (item.plot && item.plot !== 'N/A') ? item.plot
+              : null
+    if (!raw) return null
+    const sentences = raw.match(/[^.!?]+[.!?]+(?:\s|$)/g) || [raw]
+    return sentences.slice(0, 2).join('').trim()
+  }, [omdb?.Plot, item.plot])
+
+  const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} ${item.year} trailer`)}`
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80" onClick={onClose}>
+      <div className="bg-gray-900 border border-gray-800/60 rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-center pt-3 pb-0 sm:hidden">
+          <div className="w-8 h-1 rounded-full bg-gray-700" />
+        </div>
+        <div className="flex gap-4 p-5">
+          <div className="flex-none w-16 aspect-[2/3] rounded-xl overflow-hidden bg-gray-800">
+            {!posterUrl || imgError
+              ? <PosterPlaceholder title={item.title} />
+              : <>
+                  {!imgLoaded && <PosterSkeleton />}
+                  <img src={posterUrl} alt={item.title} referrerPolicy="no-referrer"
+                    className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                    onLoad={() => setImgLoaded(true)} onError={handleError} />
+                </>
+            }
+          </div>
+          <div className="flex-1 min-w-0 pt-0.5">
+            <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${item.type === 'movie' ? 'text-blue-400' : 'text-purple-400'}`}>
+              {item.type === 'movie' ? 'Film' : 'Serie'} · {item.year}
+            </p>
+            <h3 className="text-white font-bold text-base leading-snug">{item.title}</h3>
+            <ScoreBadge omdb={omdb} rating={item.rating} loading={false} />
+          </div>
+          <button onClick={onClose} className="flex-none self-start w-7 h-7 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-sm transition-colors">✕</button>
+        </div>
+        <p className="px-5 pb-4 text-gray-400 text-sm leading-relaxed min-h-[2.5rem]">
+          {plot || <span className="italic text-gray-600">Geen beschrijving beschikbaar.</span>}
+        </p>
+        <div className="px-5 pb-5">
+          <a href={trailerUrl} target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white text-sm font-semibold rounded-xl transition-colors">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            Trailer bekijken op YouTube
+          </a>
+        </div>
       </div>
     </div>
   )
@@ -630,7 +716,7 @@ function NieuwThumb({ item, isActive, onClick, omdb }) {
 
 // ── Nieuw carousel ─────────────────────────────────────────────────────────────
 
-function NieuwView({ omdbMap, watched, onToggleWatched }) {
+function NieuwView({ omdbMap, watched, onToggleWatched, onSelect }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [idx, setIdx] = useState(0)
@@ -737,6 +823,14 @@ function NieuwView({ omdbMap, watched, onToggleWatched }) {
             >
               {isWatched ? '✓ Gezien' : '+ Markeer als gezien'}
             </button>
+            {onSelect && (
+              <button
+                onClick={() => onSelect(featured)}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-800/80 hover:bg-gray-700 text-gray-200 border border-gray-700 transition-all"
+              >
+                ℹ Info
+              </button>
+            )}
             <button onClick={prev} className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-800/80 hover:bg-gray-700 text-white transition-colors text-lg">‹</button>
             <button onClick={next} className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-800/80 hover:bg-gray-700 text-white transition-colors text-lg">›</button>
           </div>
@@ -788,6 +882,10 @@ export default function StreamPick() {
   const [activeView, setActiveView] = useState('categories')
   // When non-null: show genre/custom detail within 'categories' view
   const [selectedGenre, setSelectedGenre] = useState(null)
+  // Detail modal
+  const [selectedItem, setSelectedItem] = useState(null)
+
+  const handleSelect = useCallback(item => setSelectedItem(item), [])
 
   // TMDB top-rated items (fetched once, cached 7 days)
   const [extraContent, setExtraContent] = useState([])
@@ -962,6 +1060,7 @@ export default function StreamPick() {
           loadingScores={isLoading}
           onSeeMore={handleSeeMore}
           easyWatchItems={enrichedEasyWatch}
+          onSelect={handleSelect}
         />
       )}
 
@@ -975,6 +1074,7 @@ export default function StreamPick() {
           onToggleWatched={toggleWatched}
           loadingScores={isLoading}
           onBack={handleBackToCategories}
+          onSelect={handleSelect}
         />
       )}
 
@@ -988,6 +1088,7 @@ export default function StreamPick() {
           onToggleWatched={toggleWatched}
           loadingScores={isLoading}
           onBack={handleBackToCategories}
+          onSelect={handleSelect}
         />
       )}
 
@@ -1000,6 +1101,7 @@ export default function StreamPick() {
           onToggleWatched={toggleWatched}
           loadingScores={isLoading}
           onGoToMain={() => setActiveView('categories')}
+          onSelect={handleSelect}
         />
       )}
 
@@ -1009,6 +1111,16 @@ export default function StreamPick() {
           omdbMap={omdbMap}
           watched={watched}
           onToggleWatched={toggleWatched}
+          onSelect={handleSelect}
+        />
+      )}
+
+      {/* ── Detail modal ── */}
+      {selectedItem && (
+        <DetailModal
+          item={selectedItem}
+          omdb={omdbMap[selectedItem.imdbId]}
+          onClose={() => setSelectedItem(null)}
         />
       )}
     </div>
