@@ -13,6 +13,35 @@ function tmdbFetch(url) {
   return fetch(`${url}${sep}api_key=${KEY}`)
 }
 
+export const TMDB_ENABLED = !!KEY
+
+// ── Single-item details (lazy, for the detail modal) ───────────────────────────
+// Fetches one title's overview + poster on demand. One request per click, so no
+// quota concern. Cached 30 days in localStorage.
+
+const DETAILS_TTL = 30 * 24 * 60 * 60 * 1000
+
+export async function fetchItemDetails({ tmdbId, type }) {
+  if (!KEY || !tmdbId) return null
+  const cacheKey = `tmdb_details_${type}_${tmdbId}`
+  const cached = getCache(cacheKey, DETAILS_TTL)
+  if (cached) return cached
+
+  const endpoint = type === 'series' ? 'tv' : 'movie'
+  try {
+    const res = await tmdbFetch(`${BASE}/${endpoint}/${tmdbId}?language=en-US`)
+    if (!res.ok) return null
+    const d = await res.json()
+    const details = {
+      plot: d.overview || null,
+      poster: d.poster_path ? `${TMDB_IMG}${d.poster_path}` : null,
+      rating: d.vote_average ? d.vote_average.toFixed(1) : null,
+    }
+    setCache(cacheKey, details)
+    return details
+  } catch { return null }
+}
+
 // ── Genre ID → label mapping ───────────────────────────────────────────────────
 
 const MOVIE_GENRES = {

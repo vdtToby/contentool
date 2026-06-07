@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { TOP_CONTENT, NEW_RELEASES, EASY_WATCH } from '../data/topContent.js'
 import { fetchAllOmdb, getRating, clearOmdbCache } from '../services/omdbService.js'
-import { fetchNewReleases, fetchTopRatedContent, clearTmdbCache } from '../services/tmdbService.js'
+import { fetchNewReleases, fetchTopRatedContent, fetchItemDetails, clearTmdbCache } from '../services/tmdbService.js'
 import { fetchTvmazePosters } from '../services/tvmazeService.js'
 
 const WATCHED_KEY = 'streampick_watched'
@@ -616,16 +616,41 @@ function AangeradenView({ content, omdbMap, watched, onToggleWatched, loadingSco
 // ── Detail modal (description + YouTube trailer) ──────────────────────────────
 
 function DetailModal({ item, omdb, onClose }) {
-  const { posterUrl, imgLoaded, setImgLoaded, imgError, handleError } = usePoster(item, omdb)
+  // Lazily fetch the plot (and a backup poster) from TMDB on open
+  const [tmdbDetails, setTmdbDetails] = useState(null)
+  const [detailsLoading, setDetailsLoading] = useState(false)
 
-  const plot = useMemo(() => {
-    const raw = (omdb?.Plot && omdb.Plot !== 'N/A') ? omdb.Plot
-              : (item.plot && item.plot !== 'N/A') ? item.plot
-              : null
-    if (!raw) return null
+  // Item enriched with TMDB poster as an extra fallback source
+  const enrichedItem = useMemo(
+    () => (tmdbDetails?.poster && !item.poster ? { ...item, poster: tmdbDetails.poster } : item),
+    [item, tmdbDetails?.poster]
+  )
+  const { posterUrl, imgLoaded, setImgLoaded, imgError, handleError } = usePoster(enrichedItem, omdb)
+
+  const toTwoSentences = raw => {
+    if (!raw || raw === 'N/A') return null
     const sentences = raw.match(/[^.!?]+[.!?]+(?:\s|$)/g) || [raw]
     return sentences.slice(0, 2).join('').trim()
-  }, [omdb?.Plot, item.plot])
+  }
+
+  const plot = useMemo(() => {
+    return toTwoSentences(omdb?.Plot)
+        ?? toTwoSentences(item.plot)
+        ?? toTwoSentences(tmdbDetails?.plot)
+        ?? null
+  }, [omdb?.Plot, item.plot, tmdbDetails?.plot])
+
+  // Fetch from TMDB only when we don't already have a description
+  useEffect(() => {
+    const hasLocalPlot = (omdb?.Plot && omdb.Plot !== 'N/A') || (item.plot && item.plot !== 'N/A')
+    if (hasLocalPlot || !item.tmdbId) return
+    let cancelled = false
+    setDetailsLoading(true)
+    fetchItemDetails({ tmdbId: item.tmdbId, type: item.type }).then(d => {
+      if (!cancelled) { setTmdbDetails(d); setDetailsLoading(false) }
+    })
+    return () => { cancelled = true }
+  }, [item.tmdbId, item.type, omdb?.Plot, item.plot])
 
   const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} ${item.year} trailer`)}`
 
@@ -663,7 +688,11 @@ function DetailModal({ item, omdb, onClose }) {
           <button onClick={onClose} className="flex-none self-start w-7 h-7 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white text-sm transition-colors">✕</button>
         </div>
         <p className="px-5 pb-4 text-gray-400 text-sm leading-relaxed min-h-[2.5rem]">
-          {plot || <span className="italic text-gray-600">Geen beschrijving beschikbaar.</span>}
+          {plot
+            ? plot
+            : detailsLoading
+              ? <span className="italic text-gray-600">Beschrijving laden…</span>
+              : <span className="italic text-gray-600">Geen beschrijving beschikbaar.</span>}
         </p>
         <div className="px-5 pb-5">
           <a href={trailerUrl} target="_blank" rel="noopener noreferrer"
