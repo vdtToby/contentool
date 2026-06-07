@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { TOP_CONTENT, NEW_RELEASES, EASY_WATCH } from '../data/topContent.js'
 import { fetchAllOmdb, getRating, clearOmdbCache } from '../services/omdbService.js'
-import { fetchNewReleases, clearTmdbCache } from '../services/tmdbService.js'
+import { fetchNewReleases, fetchTopRatedContent, clearTmdbCache } from '../services/tmdbService.js'
 import { fetchTvmazePosters } from '../services/tvmazeService.js'
 
 const WATCHED_KEY = 'streampick_watched'
@@ -315,10 +315,10 @@ function CategoryRow({ genre, label: labelOverride, items, omdbMap, watched, onT
       >
         {items.map(item => (
           <PosterCard
-            key={item.imdbId}
+            key={item.imdbId ?? item.id}
             item={item}
             omdb={omdbMap[item.imdbId]}
-            watched={watched.has(item.imdbId)}
+            watched={watched.has(item.imdbId ?? item.id)}
             onToggleWatched={onToggleWatched}
           />
         ))}
@@ -329,7 +329,7 @@ function CategoryRow({ genre, label: labelOverride, items, omdbMap, watched, onT
 
 // ── Categories home view ───────────────────────────────────────────────────────
 
-function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSeeMore, easyWatchItems }) {
+function CategoriesView({ content, omdbMap, watched, onToggleWatched, loadingScores, onSeeMore, easyWatchItems }) {
   const [search, setSearch] = useState('')
 
   // Save search term to history after delay
@@ -343,14 +343,14 @@ function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSe
   // Build genre → items map from static genres on each item (no OMDB dependency)
   const genreMap = useMemo(() => {
     const map = {}
-    TOP_CONTENT.forEach(item => {
+    content.forEach(item => {
       ;(item.genres || []).forEach(g => {
         if (!map[g]) map[g] = []
         map[g].push(item)
       })
     })
     return map
-  }, [])
+  }, [content])
 
   // Ordered genres with at least 3 items
   const activeGenres = useMemo(() =>
@@ -361,8 +361,8 @@ function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSe
   const searchResults = useMemo(() => {
     if (!search.trim()) return null
     const q = search.toLowerCase()
-    return TOP_CONTENT.filter(i => i.title.toLowerCase().includes(q))
-  }, [search])
+    return content.filter(i => i.title.toLowerCase().includes(q))
+  }, [search, content])
 
   return (
     <div>
@@ -394,11 +394,11 @@ function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSe
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {searchResults.map(item => (
                 <ContentCard
-                  key={item.imdbId}
+                  key={item.imdbId ?? item.id}
                   item={item}
                   omdb={omdbMap[item.imdbId]}
                   loadingScores={loadingScores}
-                  watched={watched.has(item.imdbId)}
+                  watched={watched.has(item.imdbId ?? item.id)}
                   onToggleWatched={onToggleWatched}
                 />
               ))}
@@ -439,25 +439,25 @@ function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSe
 
 // ── Genre detail view (all items for one genre) ────────────────────────────────
 
-function GenreView({ genre, customItems, customLabel, omdbMap, watched, onToggleWatched, loadingScores, onBack }) {
+function GenreView({ genre, content, customItems, customLabel, omdbMap, watched, onToggleWatched, loadingScores, onBack }) {
   const label = customLabel || GENRE_NL[genre] || genre
-  const [sortBy, setSortBy] = useState('imdb')
+  const [sortBy, setSortBy] = useState('rating')
   const [typeFilter, setTypeFilter] = useState('all')
   const [hideWatched, setHideWatched] = useState(false)
 
   const items = useMemo(() => {
-    let list = customItems ?? TOP_CONTENT.filter(i => (i.genres || []).includes(genre))
+    let list = customItems ?? (content || TOP_CONTENT).filter(i => (i.genres || []).includes(genre))
     if (typeFilter === 'movie') list = list.filter(i => i.type === 'movie')
     if (typeFilter === 'series') list = list.filter(i => i.type === 'series')
-    if (hideWatched) list = list.filter(i => !watched.has(i.imdbId))
+    if (hideWatched) list = list.filter(i => !watched.has(i.imdbId ?? i.id))
     return [...list].sort((a, b) => {
-      if (sortBy === 'year') return b.year - a.year
+      if (sortBy === 'year') return (b.year || 0) - (a.year || 0)
       if (sortBy === 'title') return a.title.localeCompare(b.title)
-      const ra = parseFloat(omdbMap[a.imdbId]?.imdbRating) || 0
-      const rb = parseFloat(omdbMap[b.imdbId]?.imdbRating) || 0
+      const ra = parseFloat(omdbMap[a.imdbId]?.imdbRating) || parseFloat(a.rating) || 0
+      const rb = parseFloat(omdbMap[b.imdbId]?.imdbRating) || parseFloat(b.rating) || 0
       return rb - ra
     })
-  }, [genre, customItems, omdbMap, watched, sortBy, typeFilter, hideWatched])
+  }, [genre, content, customItems, omdbMap, watched, sortBy, typeFilter, hideWatched])
 
   return (
     <div>
@@ -491,7 +491,7 @@ function GenreView({ genre, customItems, customLabel, omdbMap, watched, onToggle
           onChange={e => setSortBy(e.target.value)}
           className="bg-gray-900 text-gray-200 text-sm rounded-lg px-3 py-2 border border-gray-700 focus:outline-none focus:border-gray-500"
         >
-          <option value="imdb">Sorteren: IMDb score</option>
+          <option value="rating">Sorteren: Score</option>
           <option value="year">Sorteren: Jaar</option>
           <option value="title">Sorteren: Titel A-Z</option>
         </select>
@@ -499,11 +499,11 @@ function GenreView({ genre, customItems, customLabel, omdbMap, watched, onToggle
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {items.map(item => (
           <ContentCard
-            key={item.imdbId}
+            key={item.imdbId ?? item.id}
             item={item}
             omdb={omdbMap[item.imdbId]}
             loadingScores={loadingScores}
-            watched={watched.has(item.imdbId)}
+            watched={watched.has(item.imdbId ?? item.id)}
             onToggleWatched={onToggleWatched}
           />
         ))}
@@ -514,23 +514,27 @@ function GenreView({ genre, customItems, customLabel, omdbMap, watched, onToggle
 
 // ── Aangeraden view ────────────────────────────────────────────────────────────
 
-function AangeradenView({ omdbMap, watched, onToggleWatched, loadingScores, onGoToMain }) {
+function AangeradenView({ content, omdbMap, watched, onToggleWatched, loadingScores, onGoToMain }) {
   const searchHistory = useMemo(() => loadSearchHistory(), [])
 
   const recommendations = useMemo(() => {
     const topRated = () =>
-      [...TOP_CONTENT]
-        .filter(i => !watched.has(i.imdbId))
-        .sort((a, b) => (parseFloat(omdbMap[b.imdbId]?.imdbRating) || 0) - (parseFloat(omdbMap[a.imdbId]?.imdbRating) || 0))
+      [...content]
+        .filter(i => !watched.has(i.imdbId ?? i.id))
+        .sort((a, b) => {
+          const ra = parseFloat(omdbMap[a.imdbId]?.imdbRating) || parseFloat(a.rating) || 0
+          const rb = parseFloat(omdbMap[b.imdbId]?.imdbRating) || parseFloat(b.rating) || 0
+          return rb - ra
+        })
         .slice(0, 24)
 
     if (searchHistory.length === 0) return topRated()
 
     const likedGenres = {}
     searchHistory.forEach(term => {
-      TOP_CONTENT.forEach(item => {
+      content.forEach(item => {
         if (item.title.toLowerCase().includes(term)) {
-          parseGenres(omdbMap[item.imdbId]?.Genre).forEach(g => {
+          ;(item.genres || parseGenres(omdbMap[item.imdbId]?.Genre)).forEach(g => {
             likedGenres[g] = (likedGenres[g] || 0) + 1
           })
         }
@@ -543,13 +547,13 @@ function AangeradenView({ omdbMap, watched, onToggleWatched, loadingScores, onGo
       })
     })
 
-    const scored = TOP_CONTENT
-      .filter(i => !watched.has(i.imdbId))
+    const scored = content
+      .filter(i => !watched.has(i.imdbId ?? i.id))
       .map(item => ({
         item,
-        score: parseGenres(omdbMap[item.imdbId]?.Genre)
+        score: (item.genres || parseGenres(omdbMap[item.imdbId]?.Genre))
           .reduce((s, g) => s + (likedGenres[g] || 0), 0) * 10
-          + (parseFloat(omdbMap[item.imdbId]?.imdbRating) || 0),
+          + (parseFloat(omdbMap[item.imdbId]?.imdbRating) || parseFloat(item.rating) || 0),
       }))
       .filter(({ score }) => score > 0)
       .sort((a, b) => b.score - a.score)
@@ -557,7 +561,7 @@ function AangeradenView({ omdbMap, watched, onToggleWatched, loadingScores, onGo
       .map(({ item }) => item)
 
     return scored.length > 0 ? scored : topRated()
-  }, [searchHistory, omdbMap, watched])
+  }, [searchHistory, content, omdbMap, watched])
 
   return (
     <div>
@@ -579,11 +583,11 @@ function AangeradenView({ omdbMap, watched, onToggleWatched, loadingScores, onGo
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {recommendations.map(item => (
           <ContentCard
-            key={item.imdbId}
+            key={item.imdbId ?? item.id}
             item={item}
             omdb={omdbMap[item.imdbId]}
             loadingScores={loadingScores}
-            watched={watched.has(item.imdbId)}
+            watched={watched.has(item.imdbId ?? item.id)}
             onToggleWatched={onToggleWatched}
           />
         ))}
@@ -771,6 +775,18 @@ export default function StreamPick() {
   // When non-null: show genre/custom detail within 'categories' view
   const [selectedGenre, setSelectedGenre] = useState(null)
 
+  // TMDB top-rated items (fetched once, cached 7 days)
+  const [extraContent, setExtraContent] = useState([])
+
+  // Merge curated TOP_CONTENT with TMDB top-rated, deduplicating by tmdbId
+  const existingTmdbIds = useMemo(() =>
+    new Set(TOP_CONTENT.map(i => i.tmdbId).filter(Boolean)),
+  [])
+  const allContent = useMemo(() => {
+    if (extraContent.length === 0) return TOP_CONTENT
+    return [...TOP_CONTENT, ...extraContent.filter(i => !existingTmdbIds.has(i.tmdbId))]
+  }, [extraContent, existingTmdbIds])
+
   // TVmaze poster URLs for EASY_WATCH items (fetched once, cached 7 days)
   const [extraPosters, setExtraPosters] = useState({})
 
@@ -813,6 +829,13 @@ export default function StreamPick() {
     setIsLoading(false)
   }
 
+  // Fetch TMDB top-rated (requires VITE_TMDB_API_KEY, cached 7 days)
+  useEffect(() => {
+    fetchTopRatedContent().then(data => {
+      if (data && data.length > 0) setExtraContent(data)
+    })
+  }, [])
+
   // Fetch TVmaze poster images for easy-watch shows (free, no key)
   useEffect(() => {
     const ids = EASY_WATCH.map(i => i.imdbId)
@@ -842,7 +865,7 @@ export default function StreamPick() {
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <span className="text-3xl">🎬</span> StreamPick
           </h1>
-          <p className="text-gray-400 text-sm mt-0.5">Top 100 films &amp; series — scores live via OMDB</p>
+          <p className="text-gray-400 text-sm mt-0.5">{allContent.length} films &amp; series — scores live via OMDB</p>
         </div>
         <div className="flex items-center gap-3 text-xs">
           {watchedCount > 0 && (
@@ -908,6 +931,7 @@ export default function StreamPick() {
       {/* ── Categorieën ── */}
       {activeView === 'categories' && !selectedGenre && (
         <CategoriesView
+          content={allContent}
           omdbMap={omdbMap}
           watched={watched}
           onToggleWatched={toggleWatched}
@@ -921,6 +945,7 @@ export default function StreamPick() {
       {activeView === 'categories' && selectedGenre && selectedGenre !== '__easy_watch__' && (
         <GenreView
           genre={selectedGenre}
+          content={allContent}
           omdbMap={omdbMap}
           watched={watched}
           onToggleWatched={toggleWatched}
@@ -945,6 +970,7 @@ export default function StreamPick() {
       {/* ── Aangeraden ── */}
       {activeView === 'aangeraden' && (
         <AangeradenView
+          content={allContent}
           omdbMap={omdbMap}
           watched={watched}
           onToggleWatched={toggleWatched}
