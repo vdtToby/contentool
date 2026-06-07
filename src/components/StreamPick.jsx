@@ -582,6 +582,41 @@ function AangeradenView({ omdbMap, watched, onToggleWatched, loadingScores, onGo
   )
 }
 
+// ── Nieuw thumbnail with poster fallback ──────────────────────────────────────
+
+function NieuwThumb({ item, isActive, onClick, omdb }) {
+  const [srcIdx, setSrcIdx] = useState(0)
+  const [failed, setFailed] = useState(false)
+  const srcs = useMemo(() => [
+    item.poster || null,
+    omdb?.Poster && omdb.Poster !== 'N/A' ? omdb.Poster : null,
+  ].filter(Boolean), [item.poster, omdb?.Poster])
+
+  const src = srcs[srcIdx] ?? null
+
+  const handleError = useCallback(() => {
+    if (srcIdx + 1 < srcs.length) setSrcIdx(i => i + 1)
+    else setFailed(true)
+  }, [srcIdx, srcs.length])
+
+  return (
+    <div
+      data-card
+      onClick={onClick}
+      className={`flex-none w-28 snap-center cursor-pointer transition-all duration-300 ${isActive ? 'scale-105' : 'opacity-50 hover:opacity-80'}`}
+    >
+      <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gray-800">
+        {!src || failed
+          ? <PosterPlaceholder title={item.title} />
+          : <img src={src} alt={item.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" onError={handleError} />
+        }
+      </div>
+      <p className="text-[11px] text-gray-300 mt-1.5 font-medium line-clamp-2 text-center leading-tight">{item.title}</p>
+      <p className="text-[10px] text-gray-600 text-center mt-0.5">{item.year}</p>
+    </div>
+  )
+}
+
 // ── Nieuw carousel ─────────────────────────────────────────────────────────────
 
 function NieuwView({ omdbMap, watched, onToggleWatched }) {
@@ -639,12 +674,13 @@ function NieuwView({ omdbMap, watched, onToggleWatched }) {
 
       {/* Hero */}
       <div className="relative rounded-2xl overflow-hidden mb-6 min-h-[280px] bg-gray-900">
-        {featured.poster && (
+        {(featured.poster || (omdb?.Poster && omdb.Poster !== 'N/A')) && (
           <img
-            src={featured.poster}
+            src={featured.poster || omdb.Poster}
             alt={featured.title}
             referrerPolicy="no-referrer"
             className="absolute inset-0 w-full h-full object-cover opacity-25"
+            onError={e => { e.currentTarget.style.display = 'none' }}
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/75 to-transparent" />
@@ -685,26 +721,15 @@ function NieuwView({ omdbMap, watched, onToggleWatched }) {
         className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory -mx-4 px-4"
         style={{ scrollbarWidth: 'none' }}
       >
-        {items.map((item, i) => {
-          const wk = item.imdbId ?? item.id
-          return (
-            <div
-              key={wk}
-              data-card
-              onClick={() => go(i)}
-              className={`flex-none w-28 snap-center cursor-pointer transition-all duration-300 ${i === idx ? 'scale-105' : 'opacity-50 hover:opacity-80'}`}
-            >
-              <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gray-800">
-                {item.poster
-                  ? <img src={item.poster} alt={item.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                  : <PosterPlaceholder title={item.title} />
-                }
-              </div>
-              <p className="text-[11px] text-gray-300 mt-1.5 font-medium line-clamp-2 text-center leading-tight">{item.title}</p>
-              <p className="text-[10px] text-gray-600 text-center mt-0.5">{item.year}</p>
-            </div>
-          )
-        })}
+        {items.map((item, i) => (
+          <NieuwThumb
+            key={item.imdbId ?? item.id}
+            item={item}
+            isActive={i === idx}
+            onClick={() => go(i)}
+            omdb={item.imdbId ? omdbMap[item.imdbId] : null}
+          />
+        ))}
       </div>
 
       {/* Dots */}
@@ -765,10 +790,13 @@ export default function StreamPick() {
     setIsLoading(true)
     setLoadedCount(0)
     setOmdbMap({})
-    // Fetch OMDB for both main content and easy-watch series
+    // Fetch OMDB for all content (main, easy-watch, new releases) for ratings + poster fallback
+    const topIds = new Set(TOP_CONTENT.map(i => i.imdbId))
+    const easyIds = new Set(EASY_WATCH.map(i => i.imdbId))
     const ids = [
       ...TOP_CONTENT.map(i => i.imdbId),
-      ...EASY_WATCH.map(i => i.imdbId).filter(id => !TOP_CONTENT.some(t => t.imdbId === id)),
+      ...EASY_WATCH.map(i => i.imdbId).filter(id => !topIds.has(id)),
+      ...NEW_RELEASES.map(i => i.imdbId).filter(id => !topIds.has(id) && !easyIds.has(id)),
     ]
     const results = await fetchAllOmdb(ids, done => setLoadedCount(done))
     setOmdbMap(results)
