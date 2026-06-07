@@ -80,9 +80,6 @@ function ScoreBadge({ omdb, rating, loading }) {
           {rtPct >= 60 ? '🍅' : '🤢'} {rt}
         </span>
       )}
-      {omdb.Metascore && omdb.Metascore !== 'N/A' && (
-        <span className="text-cyan-400">M {omdb.Metascore}</span>
-      )}
     </div>
   )
 }

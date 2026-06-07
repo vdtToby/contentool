@@ -1,7 +1,7 @@
 const KEY = import.meta.env.VITE_TMDB_API_KEY || ''
 const BASE = 'https://api.themoviedb.org/3'
 export const TMDB_IMG = 'https://image.tmdb.org/t/p/w300'
-const CACHE_KEY = 'tmdb_new_releases'
+const CACHE_KEY = 'tmdb_new_releases_v2'
 const CACHE_TTL = 24 * 60 * 60 * 1000
 
 // ── Genre ID → label mapping ───────────────────────────────────────────────────
@@ -40,11 +40,12 @@ function setCache(key, data) {
 export function clearTmdbCache() {
   try {
     localStorage.removeItem(CACHE_KEY)
+    localStorage.removeItem('tmdb_new_releases') // legacy key
     localStorage.removeItem('tmdb_top_rated_v2')
   } catch {}
 }
 
-// ── New releases (last 90 days, daily cache) ───────────────────────────────────
+// ── New releases (last 6 months, daily cache) ──────────────────────────────────
 
 export async function fetchNewReleases() {
   if (!KEY) return null
@@ -53,7 +54,7 @@ export async function fetchNewReleases() {
 
   const d = new Date()
   const to = d.toISOString().split('T')[0]
-  d.setDate(d.getDate() - 90)
+  d.setMonth(d.getMonth() - 6)
   const from = d.toISOString().split('T')[0]
 
   try {
@@ -64,14 +65,14 @@ export async function fetchNewReleases() {
     if (!mRes.ok || !tvRes.ok) return null
     const [mov, tv] = await Promise.all([mRes.json(), tvRes.json()])
     const releases = [
-      ...(mov.results || []).slice(0, 14).map(m => ({
+      ...(mov.results || []).slice(0, 20).map(m => ({
         id: `tmdb_${m.id}`, tmdbId: m.id,
         title: m.title, year: m.release_date ? Number(m.release_date.slice(0, 4)) : null,
         releaseDate: m.release_date, type: 'movie',
         poster: m.poster_path ? `${TMDB_IMG}${m.poster_path}` : null,
         plot: m.overview || null, rating: m.vote_average ? m.vote_average.toFixed(1) : null,
       })),
-      ...(tv.results || []).slice(0, 8).map(s => ({
+      ...(tv.results || []).slice(0, 12).map(s => ({
         id: `tmdb_${s.id}`, tmdbId: s.id,
         title: s.name, year: s.first_air_date ? Number(s.first_air_date.slice(0, 4)) : null,
         releaseDate: s.first_air_date, type: 'series',
