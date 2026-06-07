@@ -631,18 +631,16 @@ function NieuwThumb({ item, isActive, onClick, omdb }) {
 // ── Nieuw carousel ─────────────────────────────────────────────────────────────
 
 function NieuwView({ omdbMap, watched, onToggleWatched }) {
-  const [items, setItems] = useState(NEW_RELEASES) // hardcoded fallback
-  const [hasTmdb, setHasTmdb] = useState(false)
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
   const [idx, setIdx] = useState(0)
   const stripRef = useRef(null)
   const timerRef = useRef(null)
 
   useEffect(() => {
     fetchNewReleases().then(data => {
-      if (data && data.length > 0) {
-        setItems(data)
-        setHasTmdb(true)
-      }
+      if (data && data.length > 0) setItems(data)
+      setLoading(false)
     })
   }, [])
 
@@ -654,9 +652,9 @@ function NieuwView({ omdbMap, watched, onToggleWatched }) {
   }, [items.length])
 
   useEffect(() => {
-    startTimer()
+    if (items.length > 0) startTimer()
     return () => clearInterval(timerRef.current)
-  }, [startTimer])
+  }, [startTimer, items.length])
 
   useEffect(() => {
     if (!stripRef.current) return
@@ -668,6 +666,31 @@ function NieuwView({ omdbMap, watched, onToggleWatched }) {
   const prev = () => go((idx - 1 + items.length) % items.length)
   const next = () => go((idx + 1) % items.length)
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-500">
+        <div className="w-6 h-6 border-2 border-gray-700 border-t-violet-400 rounded-full animate-spin" />
+        <p className="text-sm">Recente releases ophalen…</p>
+      </div>
+    )
+  }
+
+  // No TMDB key or fetch failed
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+        <p className="text-4xl">🎬</p>
+        <p className="text-white font-semibold">Geen recente releases gevonden</p>
+        <p className="text-gray-500 text-sm max-w-sm">
+          De Nieuw-tab heeft een TMDB API-sleutel nodig. Voeg{' '}
+          <code className="bg-gray-800 text-violet-400 px-1 py-0.5 rounded text-xs">VITE_TMDB_API_KEY</code>{' '}
+          toe als GitHub Secret en deploy opnieuw.
+        </p>
+      </div>
+    )
+  }
+
   const featured = items[idx]
   if (!featured) return null
 
@@ -677,12 +700,6 @@ function NieuwView({ omdbMap, watched, onToggleWatched }) {
 
   return (
     <div>
-      {!hasTmdb && (
-        <div className="mb-4 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
-          Tip: voeg een gratis TMDB API-sleutel toe als <code className="bg-black/30 px-1 rounded">VITE_TMDB_API_KEY</code> om echte recente releases te zien.
-        </div>
-      )}
-
       {/* Hero */}
       <div className="relative rounded-2xl overflow-hidden mb-6 min-h-[280px] bg-gray-900">
         {(featured.poster || (omdb?.Poster && omdb.Poster !== 'N/A')) && (
