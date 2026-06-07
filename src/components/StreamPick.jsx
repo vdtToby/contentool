@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { TOP_CONTENT, NEW_RELEASES } from '../data/topContent.js'
+import { TOP_CONTENT, NEW_RELEASES, EASY_WATCH } from '../data/topContent.js'
 import { fetchAllOmdb, getRating, clearOmdbCache } from '../services/omdbService.js'
 import { fetchNewReleases, clearTmdbCache } from '../services/tmdbService.js'
+import { fetchTvmazePosters } from '../services/tvmazeService.js'
 
 const WATCHED_KEY = 'streampick_watched'
 const SEARCH_HISTORY_KEY = 'streampick_searches'
@@ -276,9 +277,10 @@ function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched }) {
 
 // ── Category carousel row ──────────────────────────────────────────────────────
 
-function CategoryRow({ genre, items, omdbMap, watched, onToggleWatched, onSeeMore }) {
+function CategoryRow({ genre, label: labelOverride, items, omdbMap, watched, onToggleWatched, onSeeMore, seeMoreKey }) {
   const scrollRef = useRef(null)
-  const label = GENRE_NL[genre] || genre
+  const label = labelOverride || GENRE_NL[genre] || genre
+  const seeMoreArg = seeMoreKey ?? genre
 
   const scroll = dir => {
     scrollRef.current?.scrollBy({ left: dir * 600, behavior: 'smooth' })
@@ -291,7 +293,7 @@ function CategoryRow({ genre, items, omdbMap, watched, onToggleWatched, onSeeMor
         <div className="flex items-center gap-1.5">
           <button onClick={() => scroll(-1)} className="w-7 h-7 rounded-full bg-gray-800 hover:bg-gray-700 text-white flex items-center justify-center text-base leading-none transition-colors" aria-label="vorige">‹</button>
           <button onClick={() => scroll(1)} className="w-7 h-7 rounded-full bg-gray-800 hover:bg-gray-700 text-white flex items-center justify-center text-base leading-none transition-colors" aria-label="volgende">›</button>
-          <button onClick={() => onSeeMore(genre)} className="ml-1 text-sm text-violet-400 hover:text-violet-300 font-medium whitespace-nowrap transition-colors">
+          <button onClick={() => onSeeMore(seeMoreArg)} className="ml-1 text-sm text-violet-400 hover:text-violet-300 font-medium whitespace-nowrap transition-colors">
             Zie meer →
           </button>
         </div>
@@ -317,7 +319,7 @@ function CategoryRow({ genre, items, omdbMap, watched, onToggleWatched, onSeeMor
 
 // ── Categories home view ───────────────────────────────────────────────────────
 
-function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSeeMore }) {
+function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSeeMore, easyWatchItems }) {
   const [search, setSearch] = useState('')
 
   // Save search term to history after delay
@@ -410,17 +412,31 @@ function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSe
         </div>
       ) : (
         /* Genre carousels */
-        activeGenres.map(genre => (
-          <CategoryRow
-            key={genre}
-            genre={genre}
-            items={genreMap[genre]}
-            omdbMap={omdbMap}
-            watched={watched}
-            onToggleWatched={onToggleWatched}
-            onSeeMore={onSeeMore}
-          />
-        ))
+        <>
+          {/* Curated "Makkelijk wegkijken" row always first */}
+          {easyWatchItems.length > 0 && (
+            <CategoryRow
+              label="😌 Makkelijk wegkijken"
+              seeMoreKey="__easy_watch__"
+              items={easyWatchItems}
+              omdbMap={omdbMap}
+              watched={watched}
+              onToggleWatched={onToggleWatched}
+              onSeeMore={onSeeMore}
+            />
+          )}
+          {activeGenres.map(genre => (
+            <CategoryRow
+              key={genre}
+              genre={genre}
+              items={genreMap[genre]}
+              omdbMap={omdbMap}
+              watched={watched}
+              onToggleWatched={onToggleWatched}
+              onSeeMore={onSeeMore}
+            />
+          ))}
+        </>
       )}
     </div>
   )
@@ -428,14 +444,14 @@ function CategoriesView({ omdbMap, watched, onToggleWatched, loadingScores, onSe
 
 // ── Genre detail view (all items for one genre) ────────────────────────────────
 
-function GenreView({ genre, omdbMap, watched, onToggleWatched, loadingScores, onBack }) {
-  const label = GENRE_NL[genre] || genre
+function GenreView({ genre, customItems, customLabel, omdbMap, watched, onToggleWatched, loadingScores, onBack }) {
+  const label = customLabel || GENRE_NL[genre] || genre
   const [sortBy, setSortBy] = useState('imdb')
   const [typeFilter, setTypeFilter] = useState('all')
   const [hideWatched, setHideWatched] = useState(false)
 
   const items = useMemo(() => {
-    let list = TOP_CONTENT.filter(i => parseGenres(omdbMap[i.imdbId]?.Genre).includes(genre))
+    let list = customItems ?? TOP_CONTENT.filter(i => parseGenres(omdbMap[i.imdbId]?.Genre).includes(genre))
     if (typeFilter === 'movie') list = list.filter(i => i.type === 'movie')
     if (typeFilter === 'series') list = list.filter(i => i.type === 'series')
     if (hideWatched) list = list.filter(i => !watched.has(i.imdbId))
@@ -732,8 +748,19 @@ export default function StreamPick() {
 
   // 'categories' | 'aangeraden' | 'nieuw'
   const [activeView, setActiveView] = useState('categories')
-  // When non-null: show genre detail within 'categories' view
+  // When non-null: show genre/custom detail within 'categories' view
   const [selectedGenre, setSelectedGenre] = useState(null)
+
+  // TVmaze poster URLs for EASY_WATCH items (fetched once, cached 7 days)
+  const [extraPosters, setExtraPosters] = useState({})
+
+  // Enrich EASY_WATCH items with TVmaze poster URLs
+  const enrichedEasyWatch = useMemo(() =>
+    EASY_WATCH.map(item => ({
+      ...item,
+      poster: extraPosters[item.imdbId] ?? item.poster,
+    })),
+  [extraPosters])
 
   const toggleWatched = useCallback(watchKey => {
     setWatched(prev => {
@@ -753,11 +780,23 @@ export default function StreamPick() {
     setIsLoading(true)
     setLoadedCount(0)
     setOmdbMap({})
-    const ids = TOP_CONTENT.map(i => i.imdbId)
+    // Fetch OMDB for both main content and easy-watch series
+    const ids = [
+      ...TOP_CONTENT.map(i => i.imdbId),
+      ...EASY_WATCH.map(i => i.imdbId).filter(id => !TOP_CONTENT.some(t => t.imdbId === id)),
+    ]
     const results = await fetchAllOmdb(ids, done => setLoadedCount(done))
     setOmdbMap(results)
     setIsLoading(false)
   }
+
+  // Fetch TVmaze poster images for easy-watch shows (free, no key)
+  useEffect(() => {
+    const ids = EASY_WATCH.map(i => i.imdbId)
+    fetchTvmazePosters(ids).then(posters => {
+      if (Object.keys(posters).length > 0) setExtraPosters(posters)
+    })
+  }, [])
 
   useEffect(() => { loadScores() }, [])
 
@@ -851,13 +890,27 @@ export default function StreamPick() {
           onToggleWatched={toggleWatched}
           loadingScores={isLoading}
           onSeeMore={handleSeeMore}
+          easyWatchItems={enrichedEasyWatch}
         />
       )}
 
       {/* ── Genre detail ── */}
-      {activeView === 'categories' && selectedGenre && (
+      {activeView === 'categories' && selectedGenre && selectedGenre !== '__easy_watch__' && (
         <GenreView
           genre={selectedGenre}
+          omdbMap={omdbMap}
+          watched={watched}
+          onToggleWatched={toggleWatched}
+          loadingScores={isLoading}
+          onBack={handleBackToCategories}
+        />
+      )}
+
+      {/* ── Easy watch detail ── */}
+      {activeView === 'categories' && selectedGenre === '__easy_watch__' && (
+        <GenreView
+          customLabel="😌 Makkelijk wegkijken"
+          customItems={enrichedEasyWatch}
           omdbMap={omdbMap}
           watched={watched}
           onToggleWatched={toggleWatched}

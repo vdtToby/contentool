@@ -127,3 +127,24 @@ export const NEW_RELEASES = [
   { imdbId: 'tt15435876', title: 'The Penguin', year: 2024, type: 'series', poster: `${T}/wRejHNcGcRFQR0PMHODBRxF4tTB.jpg` },
   { imdbId: 'tt32686787', title: 'Adolescence', year: 2025, type: 'series', poster: `${T}/gsRJesuHxFPOILkAnhGOCrCMBCR.jpg` },
 ]
+
+// ── Makkelijk wegkijkseries — curated easy-watch category ────────────────────
+// Posters are fetched at runtime via TVmaze (free, no API key needed)
+export const EASY_WATCH = [
+  { imdbId: 'tt0460649', title: 'How I Met Your Mother',   year: 2005, type: 'series', poster: null },
+  { imdbId: 'tt10160804', title: 'Emily in Paris',          year: 2020, type: 'series', poster: null },
+  { imdbId: 'tt32748820', title: 'Running Point',           year: 2025, type: 'series', poster: null },
+  { imdbId: 'tt2467372',  title: 'Brooklyn Nine-Nine',      year: 2013, type: 'series', poster: null },
+  { imdbId: 'tt4477976',  title: "Schitt's Creek",          year: 2015, type: 'series', poster: null },
+  { imdbId: 'tt10986410', title: 'Ted Lasso',               year: 2020, type: 'series', poster: null },
+  { imdbId: 'tt5687612',  title: 'Fleabag',                 year: 2016, type: 'series', poster: null },
+  { imdbId: 'tt7767422',  title: 'Sex Education',           year: 2019, type: 'series', poster: null },
+  { imdbId: 'tt0108778',  title: 'Friends',                 year: 1994, type: 'series', poster: null },
+  { imdbId: 'tt5635632',  title: 'The Good Place',          year: 2016, type: 'series', poster: null },
+  { imdbId: 'tt1826940',  title: 'New Girl',                year: 2011, type: 'series', poster: null },
+  { imdbId: 'tt1266020',  title: 'Parks and Recreation',    year: 2009, type: 'series', poster: null },
+  { imdbId: 'tt1442437',  title: 'Modern Family',           year: 2009, type: 'series', poster: null },
+  { imdbId: 'tt7120662',  title: 'Derry Girls',             year: 2018, type: 'series', poster: null },
+  { imdbId: 'tt0238784',  title: 'Gilmore Girls',           year: 2000, type: 'series', poster: null },
+  { imdbId: 'tt13689940', title: 'Abbott Elementary',       year: 2021, type: 'series', poster: null },
+]
