@@ -766,7 +766,49 @@ text(s, Inches(1.3), oy+Inches(0.72), Inches(10.9), Inches(0.7),
      line_spacing=1.2)
 
 # ===========================================================================
-# SLIDE 17 — Afsluiting / quote
+# SLIDE 17 — Succescriteria van de onboarding (audit checklist)
+# ===========================================================================
+s = slide()
+bg(s, WHITE)
+page_header(s, "Na 90 dagen", "Succescriteria van de onboarding", GREEN, n=17)
+
+text(s, Inches(0.7), Inches(2.12), Inches(11.8), Inches(0.5),
+     [[("De onboarding is geslaagd als de klant:", 15, False, INK)]])
+
+checks = [
+    "Exact weet wie hij of zij moet bellen bij VDT.",
+    "Minimaal twee mensen binnen VDT persoonlijk kent.",
+    "Zich gekend voelt en merkt dat VDT de onderneming écht begrijpt.",
+    "Minimaal één keer proactief is geholpen — zonder eigen verzoek.",
+]
+cx = Inches(0.7); cy = Inches(2.8); cw = Inches(11.95); ch = Inches(3.05)
+rect(s, cx, cy, cw, ch, CARD, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.04, shadow=True)
+rect(s, cx, cy, cw, Inches(0.12), GREEN, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.5)
+text(s, cx+Inches(0.45), cy+Inches(0.32), cw-Inches(0.9), Inches(0.45),
+     [[("AUDIT CHECKLIST", 13, True, GREEN)]])
+rowy = cy + Inches(0.86)
+rowh = Inches(0.46)
+for i, item in enumerate(checks):
+    y = rowy + i*(rowh+Inches(0.09))
+    # zachte rij-achtergrond
+    rect(s, cx+Inches(0.45), y, cw-Inches(0.9), rowh, SOFTGREEN,
+         shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.22)
+    icon_badge(s, cx+Inches(0.55), y+Inches(0.04), "✓", GREEN, d=Inches(0.42), size=16)
+    text(s, cx+Inches(1.2), y, cw-Inches(1.7), rowh,
+         [[(item, 14.5, False, NAVY)]], anchor=MSO_ANCHOR.MIDDLE)
+
+# resultaatbalk
+ry = Inches(6.1)
+rect(s, Inches(0.7), ry, Inches(11.95), Inches(0.95), GREEN,
+     shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.1)
+text(s, Inches(1.1), ry, Inches(11.2), Inches(0.95),
+     [[("Het resultaat:  ", 15, True, WHITE),
+       ("een relatie die verder gaat dan een juridisch dossier.", 15, False, WHITE)],
+      [("Adoptie van VDT over de volle breedte.", 15, True, RGBColor(0xEF,0xF8,0xF1))]],
+     anchor=MSO_ANCHOR.MIDDLE, line_spacing=1.1, align=PP_ALIGN.CENTER)
+
+# ===========================================================================
+# SLIDE 18 — Afsluiting / quote
 # ===========================================================================
 s = slide()
 bg(s, NAVY)
