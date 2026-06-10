@@ -528,6 +528,118 @@ function GenreView({ genre, content, customItems, customLabel, omdbMap, watched,
   )
 }
 
+// ── Voor Jou view (based on watched items) ────────────────────────────────────
+
+function VoorJouView({ content, omdbMap, watched, onToggleWatched, loadingScores, onGoToMain, onSelect }) {
+  const [sortBy, setSortBy] = useState('match')
+
+  const { watchedItems, genreProfile, recommendations } = useMemo(() => {
+    const watchedItems = content.filter(i => watched.has(i.imdbId ?? i.id))
+    if (watchedItems.length === 0) return { watchedItems: [], genreProfile: {}, recommendations: [] }
+
+    // Build genre preference profile weighted by IMDB rating of watched titles
+    const genreProfile = {}
+    watchedItems.forEach(item => {
+      const genres = item.genres?.length
+        ? item.genres
+        : parseGenres(omdbMap[item.imdbId]?.Genre)
+      const rating = parseFloat(omdbMap[item.imdbId]?.imdbRating) || parseFloat(item.rating) || 6
+      genres.forEach(g => {
+        genreProfile[g] = (genreProfile[g] || 0) + rating
+      })
+    })
+
+    // Score unwatched items: genre match × weight + raw rating
+    const unwatched = content.filter(i => !watched.has(i.imdbId ?? i.id))
+    const scored = unwatched
+      .map(item => {
+        const genres = item.genres?.length
+          ? item.genres
+          : parseGenres(omdbMap[item.imdbId]?.Genre)
+        const match = genres.reduce((s, g) => s + (genreProfile[g] || 0), 0)
+        const rating = parseFloat(omdbMap[item.imdbId]?.imdbRating) || parseFloat(item.rating) || 0
+        return { item, match, rating, score: match * 2 + rating }
+      })
+      .filter(({ match }) => match > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 48)
+
+    return { watchedItems, genreProfile, recommendations: scored }
+  }, [content, omdbMap, watched])
+
+  const sorted = useMemo(() => {
+    if (sortBy === 'rating') {
+      return [...recommendations].sort((a, b) => b.rating - a.rating)
+    }
+    return recommendations // default: match score
+  }, [recommendations, sortBy])
+
+  if (watched.size === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+        <p className="text-5xl">🎯</p>
+        <p className="text-white font-semibold text-lg">Nog niets aangevinkt</p>
+        <p className="text-gray-500 text-sm max-w-sm">
+          Vink titels aan als gezien in{' '}
+          <button onClick={onGoToMain} className="text-violet-400 hover:underline">Categorieën</button>{' '}
+          en dan verschijnen hier persoonlijke aanbevelingen op basis van jouw smaak.
+        </p>
+      </div>
+    )
+  }
+
+  // Top genres to show as context
+  const topGenres = Object.entries(genreProfile)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([g]) => GENRE_NL[g] || g)
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+        <div>
+          <p className="text-sm text-gray-400">
+            Op basis van{' '}
+            <span className="text-green-400 font-medium">{watchedItems.length} geziene titels</span>
+            {topGenres.length > 0 && (
+              <> — favoriete genres: <span className="text-violet-400">{topGenres.join(', ')}</span></>
+            )}
+          </p>
+        </div>
+        <select
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value)}
+          className="bg-gray-900 text-gray-200 text-sm rounded-lg px-3 py-2 border border-gray-700 focus:outline-none focus:border-gray-500 self-start sm:self-auto"
+        >
+          <option value="match">Sorteren: Beste match</option>
+          <option value="rating">Sorteren: Hoogste score</option>
+        </select>
+      </div>
+
+      {sorted.length === 0 ? (
+        <div className="text-center py-20 text-gray-600">
+          <p className="text-4xl mb-3">🎉</p>
+          <p>Je hebt alles al gezien!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {sorted.map(({ item }) => (
+            <ContentCard
+              key={item.imdbId ?? item.id}
+              item={item}
+              omdb={omdbMap[item.imdbId]}
+              loadingScores={loadingScores}
+              watched={watched.has(item.imdbId ?? item.id)}
+              onToggleWatched={onToggleWatched}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Aangeraden view ────────────────────────────────────────────────────────────
 
 function AangeradenView({ content, omdbMap, watched, onToggleWatched, loadingScores, onGoToMain, onSelect }) {
@@ -1059,16 +1171,17 @@ export default function StreamPick() {
       )}
 
       {/* View tabs */}
-      <div className="flex gap-1 bg-gray-900 p-1 rounded-xl mb-5 w-fit">
+      <div className="flex gap-1 bg-gray-900 p-1 rounded-xl mb-5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {[
           { id: 'categories', label: '🎭 Categorieën' },
+          { id: 'voorjou',    label: `🎯 Voor jou${watched.size > 0 ? ` (${watched.size})` : ''}` },
           { id: 'aangeraden', label: '✨ Aangeraden' },
-          { id: 'nieuw', label: '🆕 Nieuw' },
+          { id: 'nieuw',      label: '🆕 Nieuw' },
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => { setActiveView(tab.id); if (tab.id === 'categories') setSelectedGenre(null) }}
-            className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all whitespace-nowrap ${
+            className={`flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all whitespace-nowrap ${
               activeView === tab.id
                 ? 'bg-white text-gray-900 shadow'
                 : 'text-gray-400 hover:text-white'
@@ -1117,6 +1230,19 @@ export default function StreamPick() {
           onToggleWatched={toggleWatched}
           loadingScores={isLoading}
           onBack={handleBackToCategories}
+          onSelect={handleSelect}
+        />
+      )}
+
+      {/* ── Voor jou ── */}
+      {activeView === 'voorjou' && (
+        <VoorJouView
+          content={allContent}
+          omdbMap={omdbMap}
+          watched={watched}
+          onToggleWatched={toggleWatched}
+          loadingScores={isLoading}
+          onGoToMain={() => setActiveView('categories')}
           onSelect={handleSelect}
         />
       )}
