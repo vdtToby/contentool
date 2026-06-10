@@ -1,7 +1,7 @@
 const KEY = import.meta.env.VITE_TMDB_API_KEY || ''
 const BASE = 'https://api.themoviedb.org/3'
 export const TMDB_IMG = 'https://image.tmdb.org/t/p/w300'
-const CACHE_KEY = 'tmdb_new_releases_v2'
+const CACHE_KEY = 'tmdb_new_releases_v4'
 const CACHE_TTL = 24 * 60 * 60 * 1000
 
 // Support both v3 API key (query param) and v4 Bearer token (Authorization header)
@@ -77,9 +77,8 @@ function setCache(key, data) {
 
 export function clearTmdbCache() {
   try {
-    localStorage.removeItem(CACHE_KEY)
-    localStorage.removeItem('tmdb_new_releases') // legacy key
-    localStorage.removeItem('tmdb_top_rated_v2')
+    ['tmdb_new_releases', 'tmdb_new_releases_v2', 'tmdb_new_releases_v3',
+     'tmdb_new_releases_v4', 'tmdb_top_rated_v2'].forEach(k => localStorage.removeItem(k))
   } catch {}
 }
 
@@ -95,22 +94,33 @@ export async function fetchNewReleases() {
   d.setMonth(d.getMonth() - 6)
   const from = d.toISOString().split('T')[0]
 
+  const getPage = (type, page) => {
+    const base = type === 'movie'
+      ? `${BASE}/discover/movie?release_date.gte=${from}&release_date.lte=${to}&sort_by=popularity.desc&vote_count.gte=30&include_adult=false`
+      : `${BASE}/discover/tv?first_air_date.gte=${from}&first_air_date.lte=${to}&sort_by=popularity.desc&vote_count.gte=15&include_adult=false`
+    return tmdbFetch(`${base}&page=${page}`)
+      .then(r => r.ok ? r.json() : { results: [] })
+      .catch(() => ({ results: [] }))
+  }
+
   try {
-    const [mRes, tvRes] = await Promise.all([
-      tmdbFetch(`${BASE}/discover/movie?release_date.gte=${from}&release_date.lte=${to}&sort_by=popularity.desc&vote_count.gte=30&include_adult=false`),
-      tmdbFetch(`${BASE}/discover/tv?first_air_date.gte=${from}&first_air_date.lte=${to}&sort_by=popularity.desc&vote_count.gte=15&include_adult=false`),
+    const [m1, m2, m3, tv1, tv2, tv3] = await Promise.all([
+      getPage('movie', 1), getPage('movie', 2), getPage('movie', 3),
+      getPage('tv', 1),    getPage('tv', 2),    getPage('tv', 3),
     ])
-    if (!mRes.ok || !tvRes.ok) return null
-    const [mov, tv] = await Promise.all([mRes.json(), tvRes.json()])
+
+    const allMovies = [...(m1.results||[]), ...(m2.results||[]), ...(m3.results||[])]
+    const allTv    = [...(tv1.results||[]), ...(tv2.results||[]), ...(tv3.results||[])]
+
     const releases = [
-      ...(mov.results || []).slice(0, 20).map(m => ({
+      ...allMovies.slice(0, 35).map(m => ({
         id: `tmdb_${m.id}`, tmdbId: m.id,
         title: m.title, year: m.release_date ? Number(m.release_date.slice(0, 4)) : null,
         releaseDate: m.release_date, type: 'movie',
         poster: m.poster_path ? `${TMDB_IMG}${m.poster_path}` : null,
         plot: m.overview || null, rating: m.vote_average ? m.vote_average.toFixed(1) : null,
       })),
-      ...(tv.results || []).slice(0, 12).map(s => ({
+      ...allTv.slice(0, 15).map(s => ({
         id: `tmdb_${s.id}`, tmdbId: s.id,
         title: s.name, year: s.first_air_date ? Number(s.first_air_date.slice(0, 4)) : null,
         releaseDate: s.first_air_date, type: 'series',
