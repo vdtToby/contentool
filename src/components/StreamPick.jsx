@@ -1075,13 +1075,21 @@ export default function StreamPick() {
   async function loadScores(forceRefresh = false) {
     if (isLoading) return
     if (!forceRefresh && loadStarted) return
-    if (forceRefresh) { clearOmdbCache(); clearTmdbCache() }
+    if (forceRefresh) {
+      clearOmdbCache()
+      clearTmdbCache()
+      // Re-trigger TMDB top-rated fetch with fresh data
+      setExtraContent([])
+      setTmdbLoading(true)
+      fetchTopRatedContent(partial => setExtraContent(partial))
+        .then(data => { if (data?.length > 0) setExtraContent(data); setTmdbLoading(false) })
+        .catch(() => setTmdbLoading(false))
+    }
     setLoadStarted(true)
     setIsLoading(true)
     setLoadedCount(0)
     setOmdbMap({})
-    // Fetch OMDB for all content (main, easy-watch, new releases) for ratings + poster fallback
-    const topIds = new Set(TOP_CONTENT.map(i => i.imdbId))
+    const topIds  = new Set(TOP_CONTENT.map(i => i.imdbId))
     const easyIds = new Set(EASY_WATCH.map(i => i.imdbId))
     const ids = [
       ...TOP_CONTENT.map(i => i.imdbId),
@@ -1094,12 +1102,12 @@ export default function StreamPick() {
   }
 
   // Fetch TMDB top-rated (requires VITE_TMDB_API_KEY, cached 7 days)
+  // onProgress fires after each batch so the UI updates progressively
   useEffect(() => {
     setTmdbLoading(true)
-    fetchTopRatedContent().then(data => {
-      if (data && data.length > 0) setExtraContent(data)
-      setTmdbLoading(false)
-    }).catch(() => setTmdbLoading(false))
+    fetchTopRatedContent(partial => setExtraContent(partial))
+      .then(data => { if (data?.length > 0) setExtraContent(data); setTmdbLoading(false) })
+      .catch(() => setTmdbLoading(false))
   }, [])
 
   // Fetch TVmaze poster images for easy-watch shows (free, no key)
@@ -1143,7 +1151,9 @@ export default function StreamPick() {
           {tmdbLoading && (
             <span className="flex items-center gap-1.5 text-violet-400">
               <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse inline-block" />
-              TMDB laden…
+              {allContent.length > TOP_CONTENT.length
+                ? `${allContent.length} titels…`
+                : 'Titels laden…'}
             </span>
           )}
           {isLoading ? (
