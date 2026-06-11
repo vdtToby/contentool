@@ -49,7 +49,7 @@ export function clearTmdbCache() {
   try {
     ['tmdb_new_releases', 'tmdb_new_releases_v2', 'tmdb_new_releases_v3',
      'tmdb_new_releases_v4', 'tmdb_top_rated_v2', 'tmdb_top_rated_v3',
-     'tmdb_top_rated_v4'].forEach(k => localStorage.removeItem(k))
+     'tmdb_top_rated_v4', 'tmdb_top_rated_v5'].forEach(k => localStorage.removeItem(k))
   } catch {}
 }
 
@@ -136,7 +136,7 @@ export async function fetchNewReleases() {
 // rate limit (max 3 batches in any 10s window = 30 requests).
 // Progressive loading: onProgress(partialData) called after each batch.
 
-const TOP_RATED_KEY = 'tmdb_top_rated_v4'
+const TOP_RATED_KEY = 'tmdb_top_rated_v5'
 const TOP_RATED_TTL = 7 * 24 * 60 * 60 * 1000
 const PAGES = 25   // 25 pages × 20 items = 500 per type (movies + series)
 const BATCH = 5    // pages per type per batch
