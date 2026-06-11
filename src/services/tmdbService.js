@@ -78,7 +78,7 @@ function setCache(key, data) {
 export function clearTmdbCache() {
   try {
     ['tmdb_new_releases', 'tmdb_new_releases_v2', 'tmdb_new_releases_v3',
-     'tmdb_new_releases_v4', 'tmdb_top_rated_v2'].forEach(k => localStorage.removeItem(k))
+     'tmdb_new_releases_v4', 'tmdb_top_rated_v2', 'tmdb_top_rated_v3'].forEach(k => localStorage.removeItem(k))
   } catch {}
 }
 
@@ -135,9 +135,10 @@ export async function fetchNewReleases() {
 
 // ── Top-rated (500 films + 500 series, 7-day cache) ────────────────────────────
 
-const TOP_RATED_KEY = 'tmdb_top_rated_v2'
+const TOP_RATED_KEY = 'tmdb_top_rated_v3'
 const TOP_RATED_TTL = 7 * 24 * 60 * 60 * 1000
-const PAGES = 25 // 25 pages × 20 results = 500 per type
+const PAGES = 25      // 25 pages × 20 results = 500 per type
+const BATCH  = 5      // fetch 5 movie + 5 tv pages at a time → 10 requests/batch
 
 export async function fetchTopRatedContent() {
   if (!KEY) return null
@@ -151,10 +152,20 @@ export async function fetchTopRatedContent() {
       .catch(() => ({ results: [] }))
 
   try {
-    const [moviePages, tvPages] = await Promise.all([
-      Promise.all(Array.from({ length: PAGES }, (_, i) => get('movie', i + 1))),
-      Promise.all(Array.from({ length: PAGES }, (_, i) => get('tv', i + 1))),
-    ])
+    const moviePages = []
+    const tvPages    = []
+
+    for (let start = 0; start < PAGES; start += BATCH) {
+      const end    = Math.min(start + BATCH, PAGES)
+      const count  = end - start
+      const batch  = await Promise.all([
+        ...Array.from({ length: count }, (_, i) => get('movie', start + i + 1)),
+        ...Array.from({ length: count }, (_, i) => get('tv',    start + i + 1)),
+      ])
+      moviePages.push(...batch.slice(0, count))
+      tvPages.push(...batch.slice(count))
+      if (end < PAGES) await new Promise(r => setTimeout(r, 350))
+    }
 
     const movies = moviePages
       .flatMap(p => p.results || [])

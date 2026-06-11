@@ -1030,6 +1030,7 @@ export default function StreamPick() {
 
   // TMDB top-rated items (fetched once, cached 7 days)
   const [extraContent, setExtraContent] = useState([])
+  const [tmdbLoading, setTmdbLoading] = useState(false)
 
   // Merge curated TOP_CONTENT with TMDB top-rated, deduplicating by tmdbId
   const existingTmdbIds = useMemo(() =>
@@ -1094,9 +1095,11 @@ export default function StreamPick() {
 
   // Fetch TMDB top-rated (requires VITE_TMDB_API_KEY, cached 7 days)
   useEffect(() => {
+    setTmdbLoading(true)
     fetchTopRatedContent().then(data => {
       if (data && data.length > 0) setExtraContent(data)
-    })
+      setTmdbLoading(false)
+    }).catch(() => setTmdbLoading(false))
   }, [])
 
   // Fetch TVmaze poster images for easy-watch shows (free, no key)
@@ -1128,16 +1131,25 @@ export default function StreamPick() {
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <span className="text-3xl">🎬</span> StreamPick
           </h1>
-          <p className="text-gray-400 text-sm mt-0.5">{allContent.length} films &amp; series — scores live via OMDB</p>
+          <p className="text-gray-400 text-sm mt-0.5">
+            {allContent.length} films &amp; series
+            {tmdbLoading && <span className="text-violet-400 animate-pulse"> — titels laden…</span>}
+          </p>
         </div>
         <div className="flex items-center gap-3 text-xs">
           {watchedCount > 0 && (
             <span className="text-green-400 font-medium">✓ {watchedCount} gezien</span>
           )}
+          {tmdbLoading && (
+            <span className="flex items-center gap-1.5 text-violet-400">
+              <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse inline-block" />
+              TMDB laden…
+            </span>
+          )}
           {isLoading ? (
             <span className="flex items-center gap-1.5 text-yellow-400">
               <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse inline-block" />
-              Laden {loadedCount}/{TOP_CONTENT.length}
+              Scores {loadedCount}/{TOP_CONTENT.length}
             </span>
           ) : loadStarted ? (
             <span className="flex items-center gap-1.5 text-green-400">
