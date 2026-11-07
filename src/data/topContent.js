@@ -218,6 +218,28 @@ export const TOP_CONTENT = [
   { imdbId: 'tt0844441', tmdbId: null,   title: 'True Blood',                                   year: 2008, type: 'series', poster: null,                                       genres: ['Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance'] },
   { imdbId: 'tt1841680', tmdbId: null,   title: 'Rectify',                                      year: 2013, type: 'series', poster: null,                                       genres: ['Crime', 'Drama'] },
   { imdbId: 'tt2543844', tmdbId: null,   title: 'Halt and Catch Fire',                          year: 2014, type: 'series', poster: null,                                       genres: ['Drama'] },
+
+  // ── AANRADERS (actuele streaming-toppers, posters/ratings via OMDB) ────────
+  { imdbId: 'tt14230388', tmdbId: null,  title: 'Poor Things',                                  year: 2023, type: 'movie',  poster: null, genres: ['Comedy', 'Drama', 'Romance', 'Sci-Fi'] },
+  { imdbId: 'tt14849194', tmdbId: null,  title: 'The Holdovers',                                year: 2023, type: 'movie',  poster: null, genres: ['Comedy', 'Drama'] },
+  { imdbId: 'tt13238346', tmdbId: null,  title: 'Past Lives',                                   year: 2023, type: 'movie',  poster: null, genres: ['Drama', 'Romance'] },
+  { imdbId: 'tt17009710', tmdbId: null,  title: 'Anatomy of a Fall',                            year: 2023, type: 'movie',  poster: null, genres: ['Crime', 'Drama', 'Thriller'] },
+  { imdbId: 'tt7160372',  tmdbId: null,  title: 'The Zone of Interest',                         year: 2023, type: 'movie',  poster: null, genres: ['Drama', 'History', 'War'] },
+  { imdbId: 'tt5537002',  tmdbId: null,  title: 'Killers of the Flower Moon',                   year: 2023, type: 'movie',  poster: null, genres: ['Crime', 'Drama', 'History'] },
+  { imdbId: 'tt5535276',  tmdbId: null,  title: 'Maestro',                                      year: 2023, type: 'movie',  poster: null, genres: ['Biography', 'Drama', 'Music', 'Romance'] },
+  { imdbId: 'tt17351924', tmdbId: null,  title: 'Saltburn',                                     year: 2023, type: 'movie',  poster: null, genres: ['Comedy', 'Drama', 'Thriller'] },
+  { imdbId: 'tt16277242', tmdbId: null,  title: 'Society of the Snow',                          year: 2023, type: 'movie',  poster: null, genres: ['Adventure', 'Drama', 'History'] },
+  { imdbId: 'tt9362722',  tmdbId: null,  title: 'Spider-Man: Across the Spider-Verse',          year: 2023, type: 'movie',  poster: null, genres: ['Animation', 'Action', 'Adventure', 'Sci-Fi'] },
+  { imdbId: 'tt10366206', tmdbId: null,  title: 'John Wick: Chapter 4',                         year: 2023, type: 'movie',  poster: null, genres: ['Action', 'Crime', 'Thriller'] },
+  { imdbId: 'tt23289160', tmdbId: null,  title: 'Godzilla Minus One',                           year: 2023, type: 'movie',  poster: null, genres: ['Action', 'Drama', 'Sci-Fi'] },
+  { imdbId: 'tt23561236', tmdbId: null,  title: 'American Fiction',                             year: 2023, type: 'movie',  poster: null, genres: ['Comedy', 'Drama'] },
+  { imdbId: 'tt1517268',  tmdbId: null,  title: 'Barbie',                                       year: 2023, type: 'movie',  poster: null, genres: ['Adventure', 'Comedy', 'Fantasy'] },
+  { imdbId: 'tt2788316',  tmdbId: null,  title: 'Shōgun',                                       year: 2024, type: 'series', poster: null, genres: ['Adventure', 'Drama', 'History', 'War'] },
+  { imdbId: 'tt13649112', tmdbId: null,  title: 'Baby Reindeer',                                year: 2024, type: 'series', poster: null, genres: ['Drama', 'Thriller'] },
+  { imdbId: 'tt14688458', tmdbId: null,  title: 'Silo',                                         year: 2023, type: 'series', poster: null, genres: ['Drama', 'Mystery', 'Sci-Fi'] },
+  { imdbId: 'tt5875444',  tmdbId: null,  title: 'Slow Horses',                                  year: 2022, type: 'series', poster: null, genres: ['Drama', 'Thriller'] },
+  { imdbId: 'tt11739474', tmdbId: null,  title: 'The Diplomat',                                 year: 2023, type: 'series', poster: null, genres: ['Drama', 'Thriller'] },
+  { imdbId: 'tt14403178', tmdbId: null,  title: 'Beef',                                         year: 2023, type: 'series', poster: null, genres: ['Comedy', 'Drama'] },
 ]
 
 // ── Recent releases (2024-2025) — pre-loaded for OMDB ratings & descriptions ───
