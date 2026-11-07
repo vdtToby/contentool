@@ -4,7 +4,10 @@ import { fetchAllOmdb, getRating, clearOmdbCache } from '../services/omdbService
 import { fetchNewReleases, fetchTopRatedContent, fetchItemDetails, clearTmdbCache } from '../services/tmdbService.js'
 import { fetchTvmazePosters } from '../services/tvmazeService.js'
 
-const WATCHED_KEY = 'streampick_watched'
+const LEGACY_WATCHED_KEY = 'streampick_watched'
+const PROFILES_KEY = 'streampick_profiles'
+const ACTIVE_PROFILE_KEY = 'streampick_active_profile'
+const WATCHED_PREFIX = 'streampick_watched__'
 const SEARCH_HISTORY_KEY = 'streampick_searches'
 
 const GENRE_NL = {
@@ -24,13 +27,51 @@ const GENRE_PRIORITY = [
 
 // ── Storage helpers ────────────────────────────────────────────────────────────
 
-function loadWatched() {
-  try { return new Set(JSON.parse(localStorage.getItem(WATCHED_KEY) || '[]')) }
+// ── Profiles ───────────────────────────────────────────────────────────────────
+// Each person gets their own "gezien"-list so recommendations are personal.
+
+function loadProfiles() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PROFILES_KEY) || 'null')
+    if (Array.isArray(raw) && raw.length) return raw
+  } catch { /* ignore */ }
+  return ['Samen']
+}
+
+function saveProfiles(list) {
+  try { localStorage.setItem(PROFILES_KEY, JSON.stringify(list)) } catch { /* ignore */ }
+}
+
+function loadActiveProfile(profiles) {
+  try {
+    const p = localStorage.getItem(ACTIVE_PROFILE_KEY)
+    if (p && profiles.includes(p)) return p
+  } catch { /* ignore */ }
+  return profiles[0]
+}
+
+function saveActiveProfile(name) {
+  try { localStorage.setItem(ACTIVE_PROFILE_KEY, name) } catch { /* ignore */ }
+}
+
+// One-time migration: fold the old single watched-list into the first profile.
+function migrateLegacyWatched() {
+  try {
+    const legacy = localStorage.getItem(LEGACY_WATCHED_KEY)
+    const firstKey = WATCHED_PREFIX + 'Samen'
+    if (legacy != null && localStorage.getItem(firstKey) == null) {
+      localStorage.setItem(firstKey, legacy)
+    }
+  } catch { /* ignore */ }
+}
+
+function loadWatchedFor(profile) {
+  try { return new Set(JSON.parse(localStorage.getItem(WATCHED_PREFIX + profile) || '[]')) }
   catch { return new Set() }
 }
 
-function saveWatched(set) {
-  try { localStorage.setItem(WATCHED_KEY, JSON.stringify([...set])) } catch { /* ignore */ }
+function saveWatchedFor(profile, set) {
+  try { localStorage.setItem(WATCHED_PREFIX + profile, JSON.stringify([...set])) } catch { /* ignore */ }
 }
 
 function loadSearchHistory() {
@@ -537,30 +578,44 @@ function VoorJouView({ content, omdbMap, watched, onToggleWatched, loadingScores
     const watchedItems = content.filter(i => watched.has(i.imdbId ?? i.id))
     if (watchedItems.length === 0) return { watchedItems: [], genreProfile: {}, recommendations: [] }
 
-    // Build genre preference profile weighted by IMDB rating of watched titles
+    // Combined review score (0-10): blend of IMDb and Rotten Tomatoes when available.
+    const reviewScoreOf = item => {
+      const o = omdbMap[item.imdbId]
+      const imdb = parseFloat(o?.imdbRating)
+      const rtRaw = o?.Ratings?.find(r => r.Source === 'Rotten Tomatoes')?.Value
+      const rt = rtRaw ? parseInt(rtRaw) / 10 : NaN
+      const vals = [imdb, rt].filter(v => !isNaN(v))
+      if (vals.length) return vals.reduce((a, b) => a + b, 0) / vals.length
+      const tmdb = parseFloat(item.rating)
+      return isNaN(tmdb) ? 0 : tmdb
+    }
+
+    // Taste profile: genres of watched titles, weighted by how good those titles are.
     const genreProfile = {}
     watchedItems.forEach(item => {
       const genres = item.genres?.length
         ? item.genres
         : parseGenres(omdbMap[item.imdbId]?.Genre)
-      const rating = parseFloat(omdbMap[item.imdbId]?.imdbRating) || parseFloat(item.rating) || 6
-      genres.forEach(g => {
-        genreProfile[g] = (genreProfile[g] || 0) + rating
-      })
+      const weight = reviewScoreOf(item) || 6
+      genres.forEach(g => { genreProfile[g] = (genreProfile[g] || 0) + weight })
     })
 
-    // Score unwatched items: genre match × weight + raw rating
+    // Recommend: titles that match her taste AND are well-reviewed.
     const unwatched = content.filter(i => !watched.has(i.imdbId ?? i.id))
     const scored = unwatched
       .map(item => {
         const genres = item.genres?.length
           ? item.genres
           : parseGenres(omdbMap[item.imdbId]?.Genre)
-        const match = genres.reduce((s, g) => s + (genreProfile[g] || 0), 0)
-        const rating = parseFloat(omdbMap[item.imdbId]?.imdbRating) || parseFloat(item.rating) || 0
-        return { item, match, rating, score: match * 2 + rating }
+        const taste = genres.reduce((s, g) => s + (genreProfile[g] || 0), 0)
+        const review = reviewScoreOf(item)
+        const reason = genres
+          .filter(g => genreProfile[g])
+          .sort((a, b) => (genreProfile[b] || 0) - (genreProfile[a] || 0))[0]
+        // Taste drives ranking, gated by review quality (poorly-reviewed titles drop out).
+        return { item, taste, review, rating: review, score: taste * (review / 10), reason }
       })
-      .filter(({ match }) => match > 0)
+      .filter(({ taste, review }) => taste > 0 && review >= 6)
       .sort((a, b) => b.score - a.score)
       .slice(0, 48)
 
@@ -569,9 +624,9 @@ function VoorJouView({ content, omdbMap, watched, onToggleWatched, loadingScores
 
   const sorted = useMemo(() => {
     if (sortBy === 'rating') {
-      return [...recommendations].sort((a, b) => b.rating - a.rating)
+      return [...recommendations].sort((a, b) => b.review - a.review)
     }
-    return recommendations // default: match score
+    return recommendations // default: taste + review match
   }, [recommendations, sortBy])
 
   if (watched.size === 0) {
@@ -605,22 +660,32 @@ function VoorJouView({ content, omdbMap, watched, onToggleWatched, loadingScores
               <> — favoriete genres: <span className="text-violet-400">{topGenres.join(', ')}</span></>
             )}
           </p>
+          <p className="text-xs text-gray-600 mt-0.5">
+            Tips die bij je smaak passen én goed beoordeeld zijn (IMDb + Rotten Tomatoes)
+          </p>
         </div>
         <select
           value={sortBy}
           onChange={e => setSortBy(e.target.value)}
           className="bg-gray-900 text-gray-200 text-sm rounded-lg px-3 py-2 border border-gray-700 focus:outline-none focus:border-gray-500 self-start sm:self-auto"
         >
-          <option value="match">Sorteren: Beste match</option>
-          <option value="rating">Sorteren: Hoogste score</option>
+          <option value="match">Sorteren: Beste match (smaak + reviews)</option>
+          <option value="rating">Sorteren: Hoogste recensiescore</option>
         </select>
       </div>
 
       {sorted.length === 0 ? (
-        <div className="text-center py-20 text-gray-600">
-          <p className="text-4xl mb-3">🎉</p>
-          <p>Je hebt alles al gezien!</p>
-        </div>
+        loadingScores ? (
+          <div className="text-center py-20 text-gray-500">
+            <p className="text-4xl mb-3">⏳</p>
+            <p>Aanbevelingen worden berekend… recensies laden</p>
+          </div>
+        ) : (
+          <div className="text-center py-20 text-gray-600">
+            <p className="text-4xl mb-3">🎯</p>
+            <p>Nog geen tips — vink meer titels aan voor betere aanbevelingen.</p>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {sorted.map(({ item }) => (
@@ -1017,7 +1082,12 @@ export default function StreamPick() {
   const [isLoading, setIsLoading] = useState(false)
   const [loadStarted, setLoadStarted] = useState(false)
 
-  const [watched, setWatched] = useState(loadWatched)
+  const [profiles, setProfiles] = useState(loadProfiles)
+  const [activeProfile, setActiveProfile] = useState(() => loadActiveProfile(loadProfiles()))
+  const [watched, setWatched] = useState(() => {
+    migrateLegacyWatched()
+    return loadWatchedFor(loadActiveProfile(loadProfiles()))
+  })
 
   // 'categories' | 'aangeraden' | 'nieuw'
   const [activeView, setActiveView] = useState('categories')
@@ -1067,10 +1137,33 @@ export default function StreamPick() {
       const next = new Set(prev)
       if (next.has(watchKey)) next.delete(watchKey)
       else next.add(watchKey)
-      saveWatched(next)
+      saveWatchedFor(activeProfile, next)
       return next
     })
+  }, [activeProfile])
+
+  const switchProfile = useCallback(name => {
+    setActiveProfile(name)
+    saveActiveProfile(name)
+    setWatched(loadWatchedFor(name))
   }, [])
+
+  const addProfile = useCallback(name => {
+    const clean = (name || '').trim().slice(0, 20)
+    if (!clean) return
+    setProfiles(prev => {
+      if (prev.includes(clean)) return prev
+      const next = [...prev, clean]
+      saveProfiles(next)
+      return next
+    })
+    switchProfile(clean)
+  }, [switchProfile])
+
+  const handleAddProfile = useCallback(() => {
+    const name = window.prompt('Naam van het profiel (bijv. je voornaam):')
+    if (name) addProfile(name)
+  }, [addProfile])
 
   async function loadScores(forceRefresh = false) {
     if (isLoading) return
@@ -1191,6 +1284,30 @@ export default function StreamPick() {
           </div>
         </div>
       )}
+
+      {/* Profile selector */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        <span className="text-xs text-gray-500 flex-none mr-0.5">Wie kijkt?</span>
+        {profiles.map(p => (
+          <button
+            key={p}
+            onClick={() => switchProfile(p)}
+            className={`flex-none px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              activeProfile === p
+                ? 'bg-violet-500 text-white shadow'
+                : 'bg-gray-800 text-gray-400 hover:text-white'
+            }`}
+          >
+            {p}
+          </button>
+        ))}
+        <button
+          onClick={handleAddProfile}
+          className="flex-none px-3 py-1.5 rounded-full text-xs text-gray-500 hover:text-white border border-dashed border-gray-700 hover:border-gray-500 transition-colors"
+        >
+          ＋ profiel
+        </button>
+      </div>
 
       {/* View tabs */}
       <div className="flex gap-1 bg-gray-900 p-1 rounded-xl mb-5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
