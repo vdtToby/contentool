@@ -12,9 +12,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.png', 'icons/*.svg'],
       manifest: {
-        name: 'StreamPick — Toby Privé',
+        name: 'StreamPick',
         short_name: 'StreamPick',
-        description: 'Top 100 films & series met live OMDB-scores',
+        description: 'Films & series uitkiezen voor thuis — tips, nieuw en recensies',
         theme_color: '#0d0d0d',
         background_color: '#030712',
         display: 'standalone',
