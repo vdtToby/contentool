@@ -59,17 +59,23 @@ const DETAILS_TTL = 30 * 24 * 60 * 60 * 1000
 
 export async function fetchItemDetails({ tmdbId, type }) {
   if (!KEY || !tmdbId) return null
-  const cacheKey = `tmdb_details_${type}_${tmdbId}`
+  const cacheKey = `tmdb_details_nl_${type}_${tmdbId}`
   const cached = getCache(cacheKey, DETAILS_TTL)
   if (cached) return cached
 
   const endpoint = type === 'series' ? 'tv' : 'movie'
   try {
-    const res = await tmdbFetch(`${BASE}/${endpoint}/${tmdbId}?language=en-US`)
+    // Prefer a Dutch synopsis; fall back to English when TMDB has no Dutch text.
+    const res = await tmdbFetch(`${BASE}/${endpoint}/${tmdbId}?language=nl-NL`)
     if (!res.ok) return null
     const d = await res.json()
+    let plot = d.overview || null
+    if (!plot) {
+      const resEn = await tmdbFetch(`${BASE}/${endpoint}/${tmdbId}?language=en-US`)
+      if (resEn.ok) { const de = await resEn.json(); plot = de.overview || null }
+    }
     const details = {
-      plot: d.overview || null,
+      plot,
       poster: d.poster_path ? `${TMDB_IMG}${d.poster_path}` : null,
       rating: d.vote_average ? d.vote_average.toFixed(1) : null,
     }

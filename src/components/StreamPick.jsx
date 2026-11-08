@@ -258,7 +258,7 @@ function PosterCard({ item, omdb, watched, onToggleWatched, onSelect }) {
 function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched, onSelect }) {
   const watchKey = item.imdbId ?? item.id
   const { posterUrl, imgLoaded, setImgLoaded, imgError, handleError } = usePoster(item, omdb)
-  const genres = parseGenres(omdb?.Genre)
+  const genres = parseGenres(omdb?.Genre).map(g => GENRE_NL[g] || g)
   const runtime = omdb?.Runtime && omdb.Runtime !== 'N/A' ? omdb.Runtime : null
 
   return (
@@ -300,38 +300,23 @@ function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched, onSe
           </span>
         )}
       </div>
-      <div className="p-3 flex flex-col flex-1">
-        <h3 className="text-white text-sm font-semibold leading-snug line-clamp-2 flex-1">{item.title}</h3>
-        <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+      <div className="p-2 flex flex-col flex-1">
+        <h3 className="text-white text-xs sm:text-sm font-semibold leading-snug line-clamp-2 flex-1">{item.title}</h3>
+        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-400">
           <span>{item.year}</span>
-          {runtime && <span>· {runtime}</span>}
+          {runtime && <span className="hidden sm:inline">· {runtime}</span>}
         </div>
-        {genres.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {genres.slice(0, 2).map(g => (
-              <span key={g} className="text-[10px] bg-gray-700/80 text-gray-300 px-1.5 py-0.5 rounded">{g}</span>
-            ))}
-          </div>
-        )}
         <ScoreBadge omdb={omdb} rating={item.rating} loading={loadingScores && !omdb} />
         <button
           onClick={() => onToggleWatched(watchKey)}
-          className={`mt-3 w-full py-1.5 rounded-lg text-xs font-semibold transition-all ${
+          className={`mt-2 w-full py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
             watched
               ? 'bg-green-500/20 text-green-400 border border-green-500/40 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/40'
               : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-green-500/20 hover:text-green-400 hover:border-green-500/40'
           }`}
         >
-          {watched ? '✓ Gezien — ongedaan maken' : '+ Markeer als gezien'}
+          {watched ? '✓ Gezien' : '+ Gezien'}
         </button>
-        {onSelect && (
-          <button
-            onClick={() => onSelect(item)}
-            className="mt-1.5 w-full py-1.5 rounded-lg text-xs font-semibold text-gray-500 hover:text-gray-300 border border-gray-800 hover:border-gray-600 transition-all"
-          >
-            ℹ Info
-          </button>
-        )}
       </div>
     </div>
   )
@@ -444,7 +429,7 @@ function CategoriesView({ content, omdbMap, watched, onToggleWatched, loadingSco
               <p>Geen resultaten gevonden</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3">
               {searchResults.map(item => (
                 <ContentCard
                   key={item.imdbId ?? item.id}
@@ -552,7 +537,7 @@ function GenreView({ genre, content, customItems, customLabel, omdbMap, watched,
           <option value="title">Sorteren: Titel A-Z</option>
         </select>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3">
         {items.map(item => (
           <ContentCard
             key={item.imdbId ?? item.id}
@@ -679,7 +664,7 @@ function VoorJouView({ content, omdbMap, watched, onToggleWatched, loadingScores
           </div>
         )
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3">
           {sorted.map(({ item }) => (
             <ContentCard
               key={item.imdbId ?? item.id}
@@ -765,7 +750,7 @@ function AangeradenView({ content, omdbMap, watched, onToggleWatched, loadingSco
           </p>
         )}
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3">
         {recommendations.map(item => (
           <ContentCard
             key={item.imdbId ?? item.id}
@@ -803,23 +788,23 @@ function DetailModal({ item, omdb, onClose }) {
   }
 
   const plot = useMemo(() => {
-    return toTwoSentences(omdb?.Plot)
+    // Prefer the Dutch TMDB synopsis; fall back to the (English) OMDB plot.
+    return toTwoSentences(tmdbDetails?.plot)
         ?? toTwoSentences(item.plot)
-        ?? toTwoSentences(tmdbDetails?.plot)
+        ?? toTwoSentences(omdb?.Plot)
         ?? null
-  }, [omdb?.Plot, item.plot, tmdbDetails?.plot])
+  }, [tmdbDetails?.plot, item.plot, omdb?.Plot])
 
-  // Fetch from TMDB only when we don't already have a description
+  // Always fetch the Dutch synopsis from TMDB when we have an id (cached 30 days).
   useEffect(() => {
-    const hasLocalPlot = (omdb?.Plot && omdb.Plot !== 'N/A') || (item.plot && item.plot !== 'N/A')
-    if (hasLocalPlot || !item.tmdbId) return
+    if (!item.tmdbId) return
     let cancelled = false
     setDetailsLoading(true)
     fetchItemDetails({ tmdbId: item.tmdbId, type: item.type }).then(d => {
       if (!cancelled) { setTmdbDetails(d); setDetailsLoading(false) }
     })
     return () => { cancelled = true }
-  }, [item.tmdbId, item.type, omdb?.Plot, item.plot])
+  }, [item.tmdbId, item.type])
 
   const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.title} ${item.year} trailer`)}`
 
@@ -1078,7 +1063,7 @@ function ContentGrid({ items, omdbMap, watched, onToggleWatched, loadingScores, 
     )
   }
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3">
       {items.map(item => (
         <ContentCard
           key={item.imdbId ?? item.id}
@@ -1155,7 +1140,7 @@ export default function StreamPick() {
   // 'movie' | 'series' — the big primary split
   const [mediaType, setMediaType] = useState('movie')
   // 'voorjou' | 'nieuw' | 'top'
-  const [activeView, setActiveView] = useState('voorjou')
+  const [activeView, setActiveView] = useState('nieuw')
   // Detail modal
   const [selectedItem, setSelectedItem] = useState(null)
 
