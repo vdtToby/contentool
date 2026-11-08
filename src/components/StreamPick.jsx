@@ -258,7 +258,8 @@ function PosterCard({ item, omdb, watched, onToggleWatched, onSelect }) {
 function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched, onSelect }) {
   const watchKey = item.imdbId ?? item.id
   const { posterUrl, imgLoaded, setImgLoaded, imgError, handleError } = usePoster(item, omdb)
-  const genres = parseGenres(omdb?.Genre).map(g => GENRE_NL[g] || g)
+  const rawGenres = parseGenres(omdb?.Genre).length ? parseGenres(omdb?.Genre) : (item.genres || [])
+  const genres = rawGenres.map(g => GENRE_NL[g] || g)
   const runtime = omdb?.Runtime && omdb.Runtime !== 'N/A' ? omdb.Runtime : null
 
   return (
@@ -306,6 +307,11 @@ function ContentCard({ item, omdb, loadingScores, watched, onToggleWatched, onSe
           <span>{item.year}</span>
           {runtime && <span className="hidden sm:inline">· {runtime}</span>}
         </div>
+        {genres.length > 0 && (
+          <p className="text-[10px] text-violet-300/80 mt-0.5 truncate">
+            {genres.slice(0, 2).join(' · ')}
+          </p>
+        )}
         <ScoreBadge omdb={omdb} rating={item.rating} loading={loadingScores && !omdb} />
         <button
           onClick={() => onToggleWatched(watchKey)}
