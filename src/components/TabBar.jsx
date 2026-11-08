@@ -30,9 +30,9 @@ const tabs = [
   },
 ]
 
-export default function TabBar({ activeTab, onTabChange }) {
+export default function TabBar({ activeTab, onTabChange, dark = false }) {
   return (
-    <div className="border-b border-gray-200">
+    <div className={`border-b ${dark ? 'border-gray-700' : 'border-gray-200'}`}>
       <nav className="-mb-px flex gap-6">
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab
@@ -43,6 +43,8 @@ export default function TabBar({ activeTab, onTabChange }) {
               className={`flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-colors ${
                 isActive
                   ? 'border-[#2FA766] text-[#2FA766]'
+                  : dark
+                  ? 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
