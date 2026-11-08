@@ -48,8 +48,8 @@ function setCache(key, data) {
 export function clearTmdbCache() {
   try {
     ['tmdb_new_releases', 'tmdb_new_releases_v2', 'tmdb_new_releases_v3',
-     'tmdb_new_releases_v4', 'tmdb_top_rated_v2', 'tmdb_top_rated_v3',
-     'tmdb_top_rated_v4', 'tmdb_top_rated_v5'].forEach(k => localStorage.removeItem(k))
+     'tmdb_new_releases_v4', 'tmdb_new_releases_v5', 'tmdb_top_rated_v2',
+     'tmdb_top_rated_v3', 'tmdb_top_rated_v4', 'tmdb_top_rated_v5'].forEach(k => localStorage.removeItem(k))
   } catch {}
 }
 
@@ -86,7 +86,7 @@ export async function fetchItemDetails({ tmdbId, type }) {
 
 // ── New releases (last 6 months, daily cache) ──────────────────────────────────
 
-const CACHE_KEY  = 'tmdb_new_releases_v4'
+const CACHE_KEY  = 'tmdb_new_releases_v5'
 const CACHE_TTL  = 24 * 60 * 60 * 1000
 
 export async function fetchNewReleases() {
@@ -121,6 +121,7 @@ export async function fetchNewReleases() {
         year: m.release_date ? Number(m.release_date.slice(0, 4)) : null,
         releaseDate: m.release_date, type: 'movie',
         poster: m.poster_path ? `${TMDB_IMG}${m.poster_path}` : null,
+        genres: mapGenres(m.genre_ids, MOVIE_GENRES),
         plot: m.overview || null, rating: m.vote_average ? m.vote_average.toFixed(1) : null,
       })),
       ...allTv.slice(0, 15).map(s => ({
@@ -128,6 +129,7 @@ export async function fetchNewReleases() {
         year: s.first_air_date ? Number(s.first_air_date.slice(0, 4)) : null,
         releaseDate: s.first_air_date, type: 'series',
         poster: s.poster_path ? `${TMDB_IMG}${s.poster_path}` : null,
+        genres: mapGenres(s.genre_ids, TV_GENRES),
         plot: s.overview || null, rating: s.vote_average ? s.vote_average.toFixed(1) : null,
       })),
     ]
