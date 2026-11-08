@@ -635,9 +635,9 @@ function VoorJouView({ content, omdbMap, watched, onToggleWatched, loadingScores
         <p className="text-5xl">🎯</p>
         <p className="text-white font-semibold text-lg">Nog niets aangevinkt</p>
         <p className="text-gray-500 text-sm max-w-sm">
-          Vink titels aan als gezien in{' '}
-          <button onClick={onGoToMain} className="text-violet-400 hover:underline">Categorieën</button>{' '}
-          en dan verschijnen hier persoonlijke aanbevelingen op basis van jouw smaak.
+          Vink titels aan als gezien bij{' '}
+          <button onClick={onGoToMain} className="text-violet-400 hover:underline">Nieuw</button> of{' '}
+          Top, dan verschijnen hier persoonlijke tips op basis van jouw smaak.
         </p>
       </div>
     )
@@ -664,14 +664,6 @@ function VoorJouView({ content, omdbMap, watched, onToggleWatched, loadingScores
             Tips die bij je smaak passen én goed beoordeeld zijn (IMDb + Rotten Tomatoes)
           </p>
         </div>
-        <select
-          value={sortBy}
-          onChange={e => setSortBy(e.target.value)}
-          className="bg-gray-900 text-gray-200 text-sm rounded-lg px-3 py-2 border border-gray-700 focus:outline-none focus:border-gray-500 self-start sm:self-auto"
-        >
-          <option value="match">Sorteren: Beste match (smaak + reviews)</option>
-          <option value="rating">Sorteren: Hoogste recensiescore</option>
-        </select>
       </div>
 
       {sorted.length === 0 ? (
@@ -1074,6 +1066,77 @@ function NieuwView({ omdbMap, watched, onToggleWatched, onSelect }) {
   )
 }
 
+// ── Simple grid + Nieuw grid ─────────────────────────────────────────────────
+
+function ContentGrid({ items, omdbMap, watched, onToggleWatched, loadingScores, onSelect, empty }) {
+  if (!items || items.length === 0) {
+    return (
+      <div className="text-center py-20 text-gray-600">
+        <p className="text-4xl mb-3">🎬</p>
+        <p>{empty || 'Niets gevonden'}</p>
+      </div>
+    )
+  }
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      {items.map(item => (
+        <ContentCard
+          key={item.imdbId ?? item.id}
+          item={item}
+          omdb={omdbMap[item.imdbId]}
+          loadingScores={loadingScores}
+          watched={watched.has(item.imdbId ?? item.id)}
+          onToggleWatched={onToggleWatched}
+          onSelect={onSelect}
+        />
+      ))}
+    </div>
+  )
+}
+
+function NieuwGrid({ mediaType, omdbMap, watched, onToggleWatched, loadingScores, onSelect }) {
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let alive = true
+    fetchNewReleases()
+      .then(data => {
+        if (!alive) return
+        setItems(Array.isArray(data) && data.length ? data : NEW_RELEASES)
+        setLoading(false)
+      })
+      .catch(() => { if (alive) { setItems(NEW_RELEASES); setLoading(false) } })
+    return () => { alive = false }
+  }, [])
+
+  const filtered = useMemo(
+    () => items.filter(i => i.type === mediaType),
+    [items, mediaType]
+  )
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3 text-gray-500">
+        <div className="w-6 h-6 border-2 border-gray-700 border-t-violet-400 rounded-full animate-spin" />
+        <p className="text-sm">Recente releases ophalen…</p>
+      </div>
+    )
+  }
+
+  return (
+    <ContentGrid
+      items={filtered}
+      omdbMap={omdbMap}
+      watched={watched}
+      onToggleWatched={onToggleWatched}
+      loadingScores={loadingScores}
+      onSelect={onSelect}
+      empty={mediaType === 'movie' ? 'Geen nieuwe films gevonden' : 'Geen nieuwe series gevonden'}
+    />
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function StreamPick() {
@@ -1089,10 +1152,10 @@ export default function StreamPick() {
     return loadWatchedFor(loadActiveProfile(loadProfiles()))
   })
 
-  // 'categories' | 'aangeraden' | 'nieuw'
-  const [activeView, setActiveView] = useState('categories')
-  // When non-null: show genre/custom detail within 'categories' view
-  const [selectedGenre, setSelectedGenre] = useState(null)
+  // 'movie' | 'series' — the big primary split
+  const [mediaType, setMediaType] = useState('movie')
+  // 'voorjou' | 'nieuw' | 'top'
+  const [activeView, setActiveView] = useState('voorjou')
   // Detail modal
   const [selectedItem, setSelectedItem] = useState(null)
 
@@ -1216,13 +1279,34 @@ export default function StreamPick() {
   const loadPct = Math.round((loadedCount / TOP_CONTENT.length) * 100)
   const watchedCount = watched.size
 
-  const handleSeeMore = useCallback(genre => {
-    setSelectedGenre(genre)
-  }, [])
+  // Content for the currently selected media type (Films or Series)
+  const typedContent = useMemo(
+    () => allContent.filter(i => i.type === mediaType),
+    [allContent, mediaType]
+  )
 
-  const handleBackToCategories = useCallback(() => {
-    setSelectedGenre(null)
-  }, [])
+  const ratingOf = useCallback(item => {
+    const imdb = parseFloat(omdbMap[item.imdbId]?.imdbRating)
+    if (!isNaN(imdb)) return imdb
+    const tmdb = parseFloat(item.rating)
+    return isNaN(tmdb) ? 0 : tmdb
+  }, [omdbMap])
+
+  // Top: highest-rated of the current type
+  const topItems = useMemo(
+    () => [...typedContent].sort((a, b) => ratingOf(b) - ratingOf(a)).slice(0, 60),
+    [typedContent, ratingOf]
+  )
+
+  // Verras me: one random well-rated, unseen pick of the current type
+  const handleSurprise = useCallback(() => {
+    const unseen = typedContent.filter(i => !watched.has(i.imdbId ?? i.id))
+    let pool = unseen.filter(i => ratingOf(i) >= 7)
+    if (pool.length === 0) pool = unseen
+    if (pool.length === 0) pool = typedContent
+    if (pool.length === 0) return
+    setSelectedItem(pool[Math.floor(Math.random() * pool.length)])
+  }, [typedContent, watched, ratingOf])
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 px-4 py-6">
@@ -1309,18 +1393,45 @@ export default function StreamPick() {
         </button>
       </div>
 
-      {/* View tabs */}
-      <div className="flex gap-1 bg-gray-900 p-1 rounded-xl mb-5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      {/* Films / Series toggle — the primary split */}
+      <div className="flex gap-1 bg-gray-900 p-1 rounded-xl mb-3">
         {[
-          { id: 'categories', label: '🎭 Categorieën' },
-          { id: 'voorjou',    label: `🎯 Voor jou${watched.size > 0 ? ` (${watched.size})` : ''}` },
-          { id: 'aangeraden', label: '✨ Aangeraden' },
-          { id: 'nieuw',      label: '🆕 Nieuw' },
+          { id: 'movie',  label: '🎬 Films' },
+          { id: 'series', label: '📺 Series' },
+        ].map(t => (
+          <button
+            key={t.id}
+            onClick={() => setMediaType(t.id)}
+            className={`flex-1 py-2.5 text-sm rounded-lg font-semibold transition-all ${
+              mediaType === t.id
+                ? 'bg-violet-500 text-white shadow'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Verras me */}
+      <button
+        onClick={handleSurprise}
+        className="w-full mb-4 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold text-sm shadow-lg hover:from-violet-500 hover:to-fuchsia-500 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+      >
+        🎲 Verras me — kies iets voor vanavond
+      </button>
+
+      {/* View tabs */}
+      <div className="flex gap-1 bg-gray-900 p-1 rounded-xl mb-5">
+        {[
+          { id: 'voorjou', label: '✨ Voor jou' },
+          { id: 'nieuw',   label: '🆕 Nieuw' },
+          { id: 'top',     label: '⭐ Top' },
         ].map(tab => (
           <button
             key={tab.id}
-            onClick={() => { setActiveView(tab.id); if (tab.id === 'categories') setSelectedGenre(null) }}
-            className={`flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all whitespace-nowrap ${
+            onClick={() => setActiveView(tab.id)}
+            className={`flex-1 px-3 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all ${
               activeView === tab.id
                 ? 'bg-white text-gray-900 shadow'
                 : 'text-gray-400 hover:text-white'
@@ -1331,81 +1442,41 @@ export default function StreamPick() {
         ))}
       </div>
 
-      {/* ── Categorieën ── */}
-      {activeView === 'categories' && !selectedGenre && (
-        <CategoriesView
-          content={allContent}
-          omdbMap={omdbMap}
-          watched={watched}
-          onToggleWatched={toggleWatched}
-          loadingScores={isLoading}
-          onSeeMore={handleSeeMore}
-          easyWatchItems={enrichedEasyWatch}
-          onSelect={handleSelect}
-        />
-      )}
-
-      {/* ── Genre detail ── */}
-      {activeView === 'categories' && selectedGenre && selectedGenre !== '__easy_watch__' && (
-        <GenreView
-          genre={selectedGenre}
-          content={allContent}
-          omdbMap={omdbMap}
-          watched={watched}
-          onToggleWatched={toggleWatched}
-          loadingScores={isLoading}
-          onBack={handleBackToCategories}
-          onSelect={handleSelect}
-        />
-      )}
-
-      {/* ── Easy watch detail ── */}
-      {activeView === 'categories' && selectedGenre === '__easy_watch__' && (
-        <GenreView
-          customLabel="😌 Makkelijk wegkijken"
-          customItems={enrichedEasyWatch}
-          omdbMap={omdbMap}
-          watched={watched}
-          onToggleWatched={toggleWatched}
-          loadingScores={isLoading}
-          onBack={handleBackToCategories}
-          onSelect={handleSelect}
-        />
-      )}
-
       {/* ── Voor jou ── */}
       {activeView === 'voorjou' && (
         <VoorJouView
-          content={allContent}
+          content={typedContent}
           omdbMap={omdbMap}
           watched={watched}
           onToggleWatched={toggleWatched}
           loadingScores={isLoading}
-          onGoToMain={() => setActiveView('categories')}
-          onSelect={handleSelect}
-        />
-      )}
-
-      {/* ── Aangeraden ── */}
-      {activeView === 'aangeraden' && (
-        <AangeradenView
-          content={allContent}
-          omdbMap={omdbMap}
-          watched={watched}
-          onToggleWatched={toggleWatched}
-          loadingScores={isLoading}
-          onGoToMain={() => setActiveView('categories')}
+          onGoToMain={() => setActiveView('nieuw')}
           onSelect={handleSelect}
         />
       )}
 
       {/* ── Nieuw ── */}
       {activeView === 'nieuw' && (
-        <NieuwView
+        <NieuwGrid
+          mediaType={mediaType}
           omdbMap={omdbMap}
           watched={watched}
           onToggleWatched={toggleWatched}
+          loadingScores={isLoading}
           onSelect={handleSelect}
+        />
+      )}
+
+      {/* ── Top ── */}
+      {activeView === 'top' && (
+        <ContentGrid
+          items={topItems}
+          omdbMap={omdbMap}
+          watched={watched}
+          onToggleWatched={toggleWatched}
+          loadingScores={isLoading}
+          onSelect={handleSelect}
+          empty={mediaType === 'movie' ? 'Geen films gevonden' : 'Geen series gevonden'}
         />
       )}
 
